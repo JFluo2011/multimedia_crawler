@@ -72,7 +72,7 @@ class TouTiao(SpiderBase):
             author = data['source']
             url = self.get_video_url(display_url)
             yield FileInfo(url, title, intro, '', author)
-
+		'http://maslino.daoapp.io/post/toutiao-video-resolution.html'
         requests.get(displayurl)
 
 

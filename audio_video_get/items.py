@@ -12,3 +12,17 @@ class AudioVideoGetItem(scrapy.Item):
     # define the fields for your item here like:
     # name = scrapy.Field()
     pass
+
+
+class TouTiaoItem(scrapy.Item):
+    # define the fields for your item here like:
+    # name = scrapy.Field()
+    link = scrapy.Field()
+    name = scrapy.Field()
+    intro = scrapy.Field()
+    album = scrapy.Field()
+    author = scrapy.Field()
+    file_urls = scrapy.Field()
+    files = scrapy.Field()
+    file_name = scrapy.Field()
+

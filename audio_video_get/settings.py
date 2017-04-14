@@ -57,6 +57,7 @@ COOKIES_ENABLED = False
 DOWNLOADER_MIDDLEWARES = {
     # 'audio_video_get.middlewares.MyCustomDownloaderMiddleware': 543,
     'audio_video_get.middlewares.RotateUserAgentMiddleware': 400,
+    'audio_video_get.middlewares.DupFilterMiddleware': 1,
 }
 
 # Enable or disable extensions
@@ -65,7 +66,7 @@ DOWNLOADER_MIDDLEWARES = {
 #    'scrapy.extensions.telnet.TelnetConsole': None,
 # }
 
-# FILES_STORE = '.'
+FILES_STORE = '.'
 
 # Configure item pipelines
 # See http://scrapy.readthedocs.org/en/latest/topics/item-pipeline.html
@@ -73,7 +74,7 @@ ITEM_PIPELINES = {
     # 'audio_video_get.pipelines.AudioVideoGetPipeline': 300,
     # 'scrapy.pipelines.files.FilesPipeline': 1,
     'audio_video_get.pipelines.ToutiaoPipeline': 200,
-    'audio_video_get.pipelines.ToutiaoFilePipeline': 300,
+    'audio_video_get.pipelines.ToutiaoFilePipeline': 100,
 }
 
 # Enable and configure the AutoThrottle extension (disabled by default)

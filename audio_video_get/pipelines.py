@@ -4,6 +4,7 @@
 #
 # Don't forget to add your pipeline to the ITEM_PIPELINES setting
 # See: http://doc.scrapy.org/en/latest/topics/item-pipeline.html
+import os
 
 import scrapy
 from scrapy.pipelines.files import FilesPipeline
@@ -12,6 +13,7 @@ from pymongo import MongoClient
 from scrapy.conf import settings
 
 from common import get_md5
+from items import TouTiaoItem
 
 
 class AudioVideoGetPipeline(object):
@@ -35,22 +37,25 @@ class ToutiaoPipeline(object):
                 'info': str(item),
                 'downloaded': 0,
                 'file': item['file_name'],
-                'local_dir': spider.FILES_STORE
+                # 'local_dir': spider.FILES_STORE
             }
         except Exception, err:
             raise DropItem(str(err))
         self.file_name = item['file_name']
-        self.file_store = spider.FILES_STORE
+        # self.file_store = spider.FILES_STORE
+        # if self.col.find({'unique_url': item['unique_url']}):
+        #     raise DropItem('the video record is already exists, unique url is {0}'.format(item['unique_url']))
         self.col.insert(data)
         return item
 
-    def file_path(self, request, response=None, info=None):
-
-        return '{path}/{file_name}'.format(path=self.file_store, file_name=self.file_name)
-
 
 class ToutiaoFilePipeline(FilesPipeline):
+    # def __init__(self):
+    #     self.item = TouTiaoItem()
+        # super(ToutiaoFilePipeline, self).__init__(settings['FILES_STORE'])
+
     def get_media_requests(self, item, info):
+        self.item = item
         for file_url in item['file_urls']:
             yield scrapy.Request(file_url)
 
@@ -60,3 +65,9 @@ class ToutiaoFilePipeline(FilesPipeline):
             raise DropItem("Item contains no files")
         item['file_paths'] = file_paths
         return item
+
+    def file_path(self, request, response=None, info=None):
+        # file_name = request.url.split('/')[-1]
+        file_name = os.path.join(self.item['author_id'], self.item['file_name'])
+        path = info.spider.name
+        return '{path}/{file_name}'.format(path=path, file_name=file_name)

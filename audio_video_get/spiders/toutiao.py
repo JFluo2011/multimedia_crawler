@@ -19,7 +19,7 @@ from ..items import TouTiaoItem
 class ToutiaoSpider(scrapy.Spider):
     name = "toutiao"
     download_delay = 3
-    FILES_STORE = os.path.join(settings['BASE_PATH'], name)
+    # FILES_STORE = os.path.join(settings['BASE_PATH'], name)
 
     def parse(self, response):
         json_data = json.loads(response.body)
@@ -31,10 +31,11 @@ class ToutiaoSpider(scrapy.Spider):
             param_as, param_cp = self._get_params()
             for data in json_data['data']:
                 item = TouTiaoItem()
-                item['link'] = data['display_url']
+                item['unique_url'] = item['link'] = data['display_url']
                 item['name'] = data['title']
                 item['intro'] = data['abstract']
                 item['album'] = ''
+                item['author_id'] = user_id
                 item['author'] = data['source']
                 if 'toutiao' in item['link']:
                     yield scrapy.Request(url=data['display_url'], meta={'item': item}, callback=self.parse_download_url)

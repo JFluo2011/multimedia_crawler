@@ -9,13 +9,27 @@ import random
 
 from scrapy import signals
 from scrapy.downloadermiddlewares.useragent import UserAgentMiddleware
+from pymongo import MongoClient
+from scrapy.conf import settings
+from scrapy import log
+from scrapy.exceptions import IgnoreRequest
+
+
+class DupFilterMiddleware(object):
+    def __init__(self):
+        self.client = MongoClient(settings['MONGODB_SERVER'], settings['MONGODB_PORT'])
+        self.db = self.client.get_database(settings['MONGODB_DB'])
+        self.col = self.db.get_collection(settings['MONGODB_COLLECTION'])
+
+    def process_request(self, request, spider):
+        if self.col.find_one({'unique_url': request.url}):
+            log.msg('the video record is already exists, unique url is {0}'.format(request.url), level=log.WARNING)
+            raise IgnoreRequest()
+
+        return request
 
 
 class AudioVideoGetSpiderMiddleware(object):
-    # Not all methods need to be defined. If a method is not defined,
-    # scrapy acts as if the spider middleware does not modify the
-    # passed objects.
-
     @classmethod
     def from_crawler(cls, crawler):
         # This method is used by Scrapy to create your spiders.
@@ -67,7 +81,7 @@ class RotateUserAgentMiddleware(UserAgentMiddleware):
     def process_request(self, request, spider):
         ua = random.choice(self.user_agent_list)
         if ua:
-            print ua
+            # print ua
             request.headers.setdefault('User-Agent', ua)
 
     # the default user_agent_list composes chrome,I E,firefox,Mozilla,opera,netscape

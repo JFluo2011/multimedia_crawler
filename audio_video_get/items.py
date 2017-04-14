@@ -22,7 +22,10 @@ class TouTiaoItem(scrapy.Item):
     intro = scrapy.Field()
     album = scrapy.Field()
     author = scrapy.Field()
+    author_id = scrapy.Field()
     file_urls = scrapy.Field()
     files = scrapy.Field()
     file_name = scrapy.Field()
+    file_paths = scrapy.Field()
+    unique_url = scrapy.Field()
 

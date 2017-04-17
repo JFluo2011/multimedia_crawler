@@ -9,6 +9,8 @@
 #     http://scrapy.readthedocs.org/en/latest/topics/downloader-middleware.html
 #     http://scrapy.readthedocs.org/en/latest/topics/spider-middleware.html
 import os
+import logging
+from config import *
 
 BASE_PATH = os.path.join(os.path.abspath('.'), 'Video')
 BOT_NAME = 'audio_video_get'
@@ -60,6 +62,16 @@ DOWNLOADER_MIDDLEWARES = {
     'audio_video_get.middlewares.DupFilterMiddleware': 1,
 }
 
+# log
+LOG_ENABLED = True
+LOG_FILE = 'result.log'
+LOG_ENCODING = 'utf-8'
+LOG_LEVEL = logging.ERROR
+LOG_FORMAT = '%(asctime)s %(filename)s[line:%(lineno)d] %(levelname)s %(message)s'
+LOG_DATEFORMAT = '%Y-%m-%d %H:%M:%S'
+LOG_STDOUT = False
+LOG_SHORT_NAMES = False
+
 # Enable or disable extensions
 # See http://scrapy.readthedocs.org/en/latest/topics/extensions.html
 # EXTENSIONS = {
@@ -72,9 +84,9 @@ FILES_STORE = '.'
 # See http://scrapy.readthedocs.org/en/latest/topics/item-pipeline.html
 ITEM_PIPELINES = {
     # 'audio_video_get.pipelines.AudioVideoGetPipeline': 300,
-    # 'scrapy.pipelines.files.FilesPipeline': 1,
+    'scrapy.pipelines.files.FilesPipeline': 1,
     'audio_video_get.pipelines.ToutiaoPipeline': 200,
-    'audio_video_get.pipelines.ToutiaoFilePipeline': 100,
+    # 'audio_video_get.pipelines.ToutiaoFilePipeline': 100,
 }
 
 # Enable and configure the AutoThrottle extension (disabled by default)
@@ -98,8 +110,3 @@ ITEM_PIPELINES = {
 # HTTPCACHE_IGNORE_HTTP_CODES = []
 # HTTPCACHE_STORAGE = 'scrapy.extensions.httpcache.FilesystemCacheStorage'
 
-# mongodb
-MONGODB_SERVER = 'localhost'
-MONGODB_PORT = 18089
-MONGODB_DB = 'ToutiaoScrapy'
-MONGODB_COLLECTION = 'Assets'

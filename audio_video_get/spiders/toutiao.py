@@ -7,6 +7,7 @@ import json
 import random
 import binascii
 import base64
+import logging
 
 import scrapy
 import requests
@@ -14,6 +15,7 @@ from scrapy.conf import settings
 
 from ..common import get_md5
 from ..items import TouTiaoItem
+from ..middlewares import RotateUserAgentMiddleware
 
 
 class ToutiaoSpider(scrapy.Spider):
@@ -57,8 +59,7 @@ class ToutiaoSpider(scrapy.Spider):
 
     def parse_download_url(self, response):
         headers = {
-            'User-Agent': 'Mozilla/5.0 (Windows NT 6.1; Win64; x64) AppleWebKit/537.36 '
-                          '(KHTML, like Gecko) Chrome/57.0.2987.133 Safari/537.36'
+            'User-Agent': random.choice(RotateUserAgentMiddleware.user_agent_list)
         }
         item = response.meta['item']
         video_id = self._get_video_id(item['link'], headers)
@@ -95,7 +96,7 @@ class ToutiaoSpider(scrapy.Spider):
         except Exception as err:
             msg = ('get video url failed, url={url}. error: {err}'.
                    format(url=url, err=err))
-            print msg
+            logging.error(msg)
 
         return video_url.decode('utf-8') if video_url else None
 

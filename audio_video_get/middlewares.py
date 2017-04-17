@@ -11,7 +11,7 @@ from scrapy import signals
 from scrapy.downloadermiddlewares.useragent import UserAgentMiddleware
 from pymongo import MongoClient
 from scrapy.conf import settings
-from scrapy import log
+import logging
 from scrapy.exceptions import IgnoreRequest
 
 
@@ -23,10 +23,10 @@ class DupFilterMiddleware(object):
 
     def process_request(self, request, spider):
         if self.col.find_one({'unique_url': request.url}):
-            log.msg('the video record is already exists, unique url is {0}'.format(request.url), level=log.WARNING)
+            logging.warning('the video record is already exists, unique url is {0}'.format(request.url))
             raise IgnoreRequest()
 
-        return request
+        return None
 
 
 class AudioVideoGetSpiderMiddleware(object):

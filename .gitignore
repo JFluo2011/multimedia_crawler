@@ -13,5 +13,10 @@ dist
 build
 logs
 
+
 # pycharm:
 .idea
+
+
+# project
+local_config.py

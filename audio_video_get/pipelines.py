@@ -5,6 +5,7 @@
 # Don't forget to add your pipeline to the ITEM_PIPELINES setting
 # See: http://doc.scrapy.org/en/latest/topics/item-pipeline.html
 import os
+import logging
 
 import scrapy
 from scrapy.pipelines.files import FilesPipeline
@@ -26,37 +27,40 @@ class ToutiaoPipeline(object):
         self.client = MongoClient(settings['MONGODB_SERVER'], settings['MONGODB_PORT'])
         self.db = self.client.get_database(settings['MONGODB_DB'])
         self.col = self.db.get_collection(settings['MONGODB_COLLECTION'])
-        self.file_name = ''
-        self.file_store = ''
 
     def process_item(self, item, spider):
         try:
             data = {
                 'url': item['link'],
                 'host': spider.name,
-                'info': str(item),
-                'downloaded': 0,
-                'file': item['file_name'],
-                # 'local_dir': spider.FILES_STORE
+                'downloaded': 1,
+                'file_name': item['file_name'],
+                'unique_url': item['unique_url'],
+                'local_dir': os.path.join(os.path.abspath(settings['FILES_STORE']), spider.name, item['file_name']),
             }
         except Exception, err:
+            logging.error(str(err))
             raise DropItem(str(err))
-        self.file_name = item['file_name']
-        # self.file_store = spider.FILES_STORE
-        # if self.col.find({'unique_url': item['unique_url']}):
-        #     raise DropItem('the video record is already exists, unique url is {0}'.format(item['unique_url']))
         self.col.insert(data)
         return item
 
 
 class ToutiaoFilePipeline(FilesPipeline):
-    # def __init__(self):
-    #     self.item = TouTiaoItem()
-        # super(ToutiaoFilePipeline, self).__init__(settings['FILES_STORE'])
+    count = 0
+    file_names = []
+
+    def __init__(self, *args, **kwargs):
+        super(ToutiaoFilePipeline, self).__init__(*args, **kwargs)
+        # self.client = MongoClient(settings['MONGODB_SERVER'], settings['MONGODB_PORT'])
+        # self.db = self.client.get_database(settings['MONGODB_DB'])
+        # self.col = self.db.get_collection(settings['MONGODB_COLLECTION'])
+        self.item = TouTiaoItem()
 
     def get_media_requests(self, item, info):
         self.item = item
         for file_url in item['file_urls']:
+            self.count += 1
+            logging.error(file_url + ' ' + str(self.count))
             yield scrapy.Request(file_url)
 
     def item_completed(self, results, item, info):
@@ -64,6 +68,9 @@ class ToutiaoFilePipeline(FilesPipeline):
         if not file_paths:
             raise DropItem("Item contains no files")
         item['file_paths'] = file_paths
+        self.file_names.append(item['file_name'])
+        logging.error(self.file_names)
+        # self.col.update({'file_name': item['file_name']}, {'$set': {'downloaded': 1}})
         return item
 
     def file_path(self, request, response=None, info=None):

@@ -9,8 +9,11 @@ Desktop.ini
 *.so
 *.egg
 *.egg-info
+*.log
 dist
 build
+full
+Video
 logs
 
 

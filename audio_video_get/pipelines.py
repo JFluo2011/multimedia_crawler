@@ -46,8 +46,7 @@ class ToutiaoPipeline(object):
 
 
 class ToutiaoFilePipeline(FilesPipeline):
-    count = 0
-    file_names = []
+    # path_list = []
 
     def __init__(self, *args, **kwargs):
         super(ToutiaoFilePipeline, self).__init__(*args, **kwargs)
@@ -59,22 +58,29 @@ class ToutiaoFilePipeline(FilesPipeline):
     def get_media_requests(self, item, info):
         self.item = item
         for file_url in item['file_urls']:
-            self.count += 1
-            logging.error(file_url + ' ' + str(self.count))
             yield scrapy.Request(file_url)
 
     def item_completed(self, results, item, info):
-        file_paths = [x['path'] for ok, x in results if ok]
+        file_paths = [x['path'].replace('/', os.sep) for ok, x in results if ok]
         if not file_paths:
             raise DropItem("Item contains no files")
         item['file_paths'] = file_paths
-        self.file_names.append(item['file_name'])
-        logging.error(self.file_names)
+        base_path = os.path.join('Video', 'toutiao')
+        if not os.path.exists(base_path):
+            os.makedirs(base_path)
+        # os.sep
+        src_path = os.path.join(os.path.abspath('.'), file_paths[0])
+        dre_path = os.path.join(os.path.abspath('.'), base_path, item['author_id'], file_paths[0].split(os.sep, 1)[1])
+        print src_path, dre_path
+        os.rename(src_path, dre_path)
         # self.col.update({'file_name': item['file_name']}, {'$set': {'downloaded': 1}})
         return item
 
-    def file_path(self, request, response=None, info=None):
-        # file_name = request.url.split('/')[-1]
-        file_name = os.path.join(self.item['author_id'], self.item['file_name'])
-        path = info.spider.name
-        return '{path}/{file_name}'.format(path=path, file_name=file_name)
+    # def file_path(self, request, response=None, info=None):
+    #     # file_name = request.url.split('/')[-1]
+    #     file_name = os.path.join(self.item['author_id'], self.item['file_name'])
+    #     path = info.spider.name
+    #     # self.path_list.append(os.path.join(path, file_name))
+    #     logging.error(os.path.join(path, file_name))
+    #     return os.path.join(path, file_name)
+    #     # return '{path}/{file_name}'.format(path=path, file_name=file_name)

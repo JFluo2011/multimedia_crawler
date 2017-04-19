@@ -15,7 +15,6 @@ from scrapy.conf import settings
 
 from ..common import get_md5
 from ..items import TouTiaoItem
-from ..middlewares import RotateUserAgentMiddleware
 
 
 class ToutiaoSpider(scrapy.Spider):
@@ -55,11 +54,12 @@ class ToutiaoSpider(scrapy.Spider):
                 'cp': param_cp,
             }
             url = 'http://www.toutiao.com/c/user/article/'
+            # yield scrapy.FormRequest(url, method='GET', formdata=params)
             yield scrapy.Request(url=url, body=json.dumps(params), callback=self.parse)
 
     def parse_download_url(self, response):
         headers = {
-            'User-Agent': random.choice(RotateUserAgentMiddleware.user_agent_list)
+            'User-Agent': random.choice(settings['USER_AGENTS'])
         }
         item = response.meta['item']
         video_id = self._get_video_id(item['link'], headers)

@@ -22,9 +22,16 @@ class DupFilterMiddleware(object):
         self.col = self.db.get_collection(settings['MONGODB_COLLECTION'])
 
     def process_request(self, request, spider):
-        if self.col.find_one({'unique_url': request.url}):
+        result_data = self.col.find_one({'unique_url': request.url})
+        if result_data:
             logging.warning('the video record is already exists, unique url is {0}'.format(request.url))
             raise IgnoreRequest()
+        # else:
+        #     if result_data['download'] in [0, 1]:
+        #         logging.warning('the video record is already exists, unique url is {0}'.format(request.url))
+        #         raise IgnoreRequest()
+        #     elif result_data['download'] == -1:
+        #         self.col.delete_one()
 
         return None
 

@@ -85,8 +85,8 @@ FILES_STORE = '.'
 ITEM_PIPELINES = {
     # 'audio_video_get.pipelines.AudioVideoGetPipeline': 300,
     # 'scrapy.pipelines.files.FilesPipeline': 1,
-    'audio_video_get.pipelines.ToutiaoPipeline': 200,
-    'audio_video_get.pipelines.ToutiaoFilePipeline': 100,
+    'audio_video_get.pipelines.ToutiaoPipeline': 100,
+    'audio_video_get.pipelines.ToutiaoFilePipeline': 200,
 }
 
 # Enable and configure the AutoThrottle extension (disabled by default)

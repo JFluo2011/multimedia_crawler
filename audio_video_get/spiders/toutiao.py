@@ -32,43 +32,43 @@ class ToutiaoSpider(scrapy.Spider):
             param_as, param_cp = self._get_params()
             for data in json_data['data']:
                 item = TouTiaoItem()
-                item['unique_url'] = item['link'] = data['display_url']
+                item['unique_url'] = item['video_url'] = data['display_url']
                 item['name'] = data['title']
                 item['intro'] = data['abstract']
                 item['album'] = ''
                 item['author_id'] = user_id
                 item['author'] = data['source']
-                if 'toutiao' in item['link']:
+                if 'toutiao' in item['video_url']:
                     yield scrapy.Request(url=data['display_url'], meta={'item': item}, callback=self.parse_download_url)
                 else:
-                    item['file_urls'] = [item['link']]
-                    item['file_name'] = get_md5(item['link'])
+                    item['file_urls'] = [item['video_url']]
+                    # item['file_name'] = get_md5(item['link'])
                     yield item
 
             params = {
                 'page_type': '0',
                 'user_id': user_id,
-                'max_behot_time': max_behot_time,
+                'max_behot_time': str(max_behot_time),
                 'count': '20',
                 'as': param_as,
                 'cp': param_cp,
             }
             url = 'http://www.toutiao.com/c/user/article/'
-            # yield scrapy.FormRequest(url, method='GET', formdata=params)
-            yield scrapy.Request(url=url, body=json.dumps(params), callback=self.parse)
+            yield scrapy.FormRequest(url, method='GET', formdata=params)
+            # yield scrapy.Request(url=url, body=json.dumps(params), callback=self.parse)
 
     def parse_download_url(self, response):
         headers = {
             'User-Agent': random.choice(settings['USER_AGENTS'])
         }
         item = response.meta['item']
-        video_id = self._get_video_id(item['link'], headers)
+        video_id = self._get_video_id(item['video_url'], headers)
         if video_id:
             url = 'http://ib.365yg.com/video/urls/v/1/toutiao/mp4/' + video_id
             video_url = self._get_video_url(url, video_id, headers)
             if video_url:
-                item['link'], item['file_urls'] = video_url, [video_url]
-                item['file_name'] = get_md5(video_url)
+                item['video_url'], item['file_urls'] = video_url, [video_url]
+                # item['file_name'] = get_md5(video_url)
             return item
 
     @staticmethod

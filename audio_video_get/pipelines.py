@@ -27,10 +27,12 @@ class ToutiaoPipeline(object):
         self.client = MongoClient(settings['MONGODB_SERVER'], settings['MONGODB_PORT'])
         self.db = self.client.get_database(settings['MONGODB_DB'])
         self.col = self.db.get_collection(settings['MONGODB_COLLECTION'])
+        self.col.ensure_index('unique_url', unique=True)
 
     def open_spider(self, spider):
         self.col.remove({'download': -1})
-        self.col.remove({'download': 'downloading'})
+        # print 'downloading: ', (self.col.find({'download': 'downloading'}))
+        # self.col.remove({'download': 'downloading'})
 
     def process_item(self, item, spider):
         try:
@@ -42,10 +44,10 @@ class ToutiaoPipeline(object):
                 'unique_url': item['unique_url'],
                 'file_paths': '',
             }
+            self.col.insert(data)
         except Exception, err:
             logging.error(str(err))
             raise DropItem(str(err))
-        self.col.insert(data)
         return item
 
     def close_spider(self, spider):
@@ -56,9 +58,6 @@ class ToutiaoPipeline(object):
 
 
 class ToutiaoFilePipeline(FilesPipeline):
-    # path_list = []
-    count = 0
-
     def __init__(self, *args, **kwargs):
         super(ToutiaoFilePipeline, self).__init__(*args, **kwargs)
         self.client = MongoClient(settings['MONGODB_SERVER'], settings['MONGODB_PORT'])
@@ -88,7 +87,6 @@ class ToutiaoFilePipeline(FilesPipeline):
         return dre_path
 
     def item_completed(self, results, item, info):
-        self.count += 1
         file_paths = [x['path'].replace('/', os.sep) for ok, x in results if ok]
         if not file_paths:
             raise DropItem("Item contains no files")
@@ -100,7 +98,6 @@ class ToutiaoFilePipeline(FilesPipeline):
                             'file_name': item['file_name'],
                             'file_paths': item['file_paths']
                         }})
-        logging.error(self.count)
         return item
 
     # def file_path(self, request, response=None, info=None):

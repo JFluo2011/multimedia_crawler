@@ -84,7 +84,7 @@ FILES_STORE = '.'
 # See http://scrapy.readthedocs.org/en/latest/topics/item-pipeline.html
 ITEM_PIPELINES = {
     # 'audio_video_get.pipelines.AudioVideoGetPipeline': 300,
-    # 'scrapy.pipelines.files.FilesPipeline': 1,
+    # 'scrapy.pipelines.files.FilesPipeline': 200,
     'audio_video_get.pipelines.ToutiaoPipeline': 100,
     'audio_video_get.pipelines.ToutiaoFilePipeline': 200,
 }

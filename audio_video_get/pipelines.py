@@ -30,31 +30,40 @@ class ToutiaoPipeline(object):
         self.col.ensure_index('unique_url', unique=True)
 
     def open_spider(self, spider):
-        self.col.remove({'download': -1})
+        pass
+        # self.col.remove({'download': -1})
         # print 'downloading: ', (self.col.find({'download': 'downloading'}))
         # self.col.remove({'download': 'downloading'})
 
     def process_item(self, item, spider):
         try:
             data = {
-                'video_url': item['video_url'],
+                'unique_url': item['unique_url'],
+                'name': item['name'],
+                'intro': item['intro'],
+                'album': item['album'],
+                'author': item['author'],
+                'author_id': item['author_id'],
                 'spider': spider.name,
                 'download': 0,
                 'file_name': '',
-                'unique_url': item['unique_url'],
                 'file_paths': '',
+                'video_url': item['video_url'],
             }
-            self.col.insert(data)
+            self.col.update({'unique_url': item['unique_url']}, data, upsert=True)
+            # self.col.insert(data)
         except Exception, err:
             logging.error(str(err))
             raise DropItem(str(err))
         return item
 
     def close_spider(self, spider):
+        pass
         # for r in self.col.find({'download': 'downloading'}):
         #     if os.path.exists(r['file_paths']):
         #         os.remove(r['file_paths'])
-        self.col.remove({'download': 'downloading'})
+        # self.col.update({'download': 'downloading'}, {'$set': {'download': '0'}})
+        # self.col.update({'download': -1}, {'$set': {'download': '0'}})
 
 
 class ToutiaoFilePipeline(FilesPipeline):
@@ -69,7 +78,7 @@ class ToutiaoFilePipeline(FilesPipeline):
         self.item = item
         for file_url in item['file_urls']:
             # self.col.update_one({'video_url': file_url}, {'$set': {'download': 'downloading'}})
-            self.col.update({'unique_url': item['unique_url']}, {'$set': {'download': 'downloading'}})
+            # self.col.update({'unique_url': item['unique_url']}, {'$set': {'download': 'downloading'}})
             yield scrapy.Request(file_url)
 
     def __move_file(self, file_path):
@@ -89,6 +98,7 @@ class ToutiaoFilePipeline(FilesPipeline):
     def item_completed(self, results, item, info):
         file_paths = [x['path'].replace('/', os.sep) for ok, x in results if ok]
         if not file_paths:
+            self.col.update({'unique_url': item['unique_url']}, {'$set': {'download': -1}})
             raise DropItem("Item contains no files")
         item['file_paths'] = self.__move_file(file_paths[0])
         item['file_name'] = os.path.split(file_paths[0])[0]
@@ -108,11 +118,3 @@ class ToutiaoFilePipeline(FilesPipeline):
     #     logging.error(os.path.join(path, file_name))
     #     return os.path.join(path, file_name)
     #     # return '{path}/{file_name}'.format(path=path, file_name=file_name)
-
-    # def media_failed(self, failure, request, info):
-    #     super(ToutiaoFilePipeline, self).media_failed(failure, request, info)
-    #     self.col.update({'file_name': self.item['file_name']}, {'$set': {'download': -1}})
-
-    # def media_to_download(self, request, info):
-    #     super(ToutiaoFilePipeline, self).media_to_download(request, info)
-    #     self.col.update_one({'url': request.url}, {'$set': {'download': 'downloading'}})

@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
 import re
-import os
 import math
 import time
 import json
@@ -8,10 +7,11 @@ import random
 import binascii
 import base64
 import logging
+import requests
 
 import scrapy
-import requests
 from scrapy.conf import settings
+from pymongo import MongoClient
 
 from ..common import get_md5
 from ..items import TouTiaoItem
@@ -19,14 +19,18 @@ from ..items import TouTiaoItem
 
 class ToutiaoSpider(scrapy.Spider):
     name = "toutiao"
-    download_delay = 3
+    download_delay = 2
     # FILES_STORE = os.path.join(settings['BASE_PATH'], name)
+
+    def __init__(self):
+        super(ToutiaoSpider, self).__init__()
+        self.client = MongoClient(settings['MONGODB_SERVER'], settings['MONGODB_PORT'])
+        self.db = self.client.get_database(settings['MONGODB_DB'])
+        self.col = self.db.get_collection(settings['MONGODB_COLLECTION'])
 
     def parse(self, response):
         json_data = json.loads(response.body)
         if json_data['has_more'] != 0:
-            # base_url = ('http://www.toutiao.com/c/user/article/?page_type=0&user_id={user_id}&'
-            #             'max_behot_time={max_behot_time}&count=20&as={AS}&cp={cp}')
             max_behot_time = json_data['next']['max_behot_time']
             user_id = re.findall(r'user_id=(\d+)', response.url)[0]
             param_as, param_cp = self._get_params()
@@ -42,7 +46,6 @@ class ToutiaoSpider(scrapy.Spider):
                     yield scrapy.Request(url=data['display_url'], meta={'item': item}, callback=self.parse_download_url)
                 else:
                     item['file_urls'] = [item['video_url']]
-                    # item['file_name'] = get_md5(item['link'])
                     yield item
 
             params = {
@@ -55,26 +58,32 @@ class ToutiaoSpider(scrapy.Spider):
             }
             url = 'http://www.toutiao.com/c/user/article/'
             yield scrapy.FormRequest(url, method='GET', formdata=params)
-            # yield scrapy.Request(url=url, body=json.dumps(params), callback=self.parse)
 
     def parse_download_url(self, response):
         headers = {
             'User-Agent': random.choice(settings['USER_AGENTS'])
         }
         item = response.meta['item']
-        video_id = self._get_video_id(item['video_url'], headers)
+        if 'toutiao' not in item['unique_url']:
+            item['file_urls'] = [item['unique_url']]
+            return item
+        video_id = self._get_video_id(item['unique_url'], headers)
         if video_id:
             url = 'http://ib.365yg.com/video/urls/v/1/toutiao/mp4/' + video_id
             video_url = self._get_video_url(url, video_id, headers)
             if video_url:
                 item['video_url'], item['file_urls'] = video_url, [video_url]
-                # item['file_name'] = get_md5(video_url)
             return item
 
     @staticmethod
     def _get_video_id(url, headers):
+        video_id = None
         r = requests.get(url=url, headers=headers)
-        return re.findall(r"videoid:[ ]*?'(.*?)'", r.text)[0] if r.status_code == 200 else None
+        try:
+            video_id = re.findall(r"videoid:[ ]*?'(.*?)'", r.text)[0]
+        except Exception as err:
+            logging.error(err)
+        return video_id
 
     @staticmethod
     def _get_video_url(url, video_id, headers):
@@ -119,10 +128,19 @@ class ToutiaoSpider(scrapy.Spider):
         return 'A1' + a + i[-3:], i[0:3] + l + 'E1'
 
     def start_requests(self):
+        for result in self.col.find({'download': -1}):
+            logging.error('redownload url {}'.format(result['unique_url']))
+            item = TouTiaoItem()
+            item['unique_url'] = result['unique_url']
+            item['name'] = result['name']
+            item['intro'] = result['intro']
+            item['album'] = result['album']
+            item['author_id'] = result['author_id']
+            item['author'] = result['author']
+            item['video_url'] = result['video_url']
+            yield scrapy.FormRequest(url=result['unique_url'], meta={'item': item}, callback=self.parse_download_url)
+
         user_ids = ['6975800262', '50590890693', '5857206714']
-        # user_ids = self.user_group.values()
-        # base_url = ('http://www.toutiao.com/c/user/article/?page_type=0&user_id={user_id}&max_behot_time=0&'
-        #             'count=20&as={AS}&cp={cp}')
         base_url = 'http://www.toutiao.com/c/user/article/'
         for user_id in user_ids:
             param_as, param_cp = self._get_params()

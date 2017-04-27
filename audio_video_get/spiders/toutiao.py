@@ -73,7 +73,7 @@ class ToutiaoSpider(scrapy.Spider):
             video_url = self._get_video_url(url, video_id, headers)
             if video_url:
                 item['video_url'], item['file_urls'] = video_url, [video_url]
-            return item
+                return item
 
     @staticmethod
     def _get_video_id(url, headers):

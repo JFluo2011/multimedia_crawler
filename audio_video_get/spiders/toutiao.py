@@ -104,7 +104,7 @@ class ToutiaoSpider(scrapy.Spider):
             video_url = base64.b64decode(r.json()['data']['video_list']['video_1']['main_url'])
         except Exception as err:
             msg = ('get video url failed, url={url}. error: {err}'.
-                   format(url=url, err=err))
+                   format(url=url, err=repr(err)))
             logging.error(msg)
 
         return video_url.decode('utf-8') if video_url else None

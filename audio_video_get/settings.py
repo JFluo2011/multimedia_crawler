@@ -10,7 +10,10 @@
 #     http://scrapy.readthedocs.org/en/latest/topics/spider-middleware.html
 import os
 import logging
-from config import *
+try:
+    from config import *
+except:
+    pass
 
 BASE_PATH = os.path.join(os.path.abspath('.'), 'Video')
 BOT_NAME = 'audio_video_get'
@@ -58,15 +61,15 @@ COOKIES_ENABLED = False
 # See http://scrapy.readthedocs.org/en/latest/topics/downloader-middleware.html
 DOWNLOADER_MIDDLEWARES = {
     # 'audio_video_get.middlewares.MyCustomDownloaderMiddleware': 543,
-    'audio_video_get.middlewares.RotateUserAgentMiddleware': 400,
-    'audio_video_get.middlewares.DupFilterMiddleware': 1,
+    # 'audio_video_get.middlewares.RotateUserAgentMiddleware': 400,
+    # 'audio_video_get.middlewares.TouTiaoDupFilterMiddleware': 1,
 }
 
 # log
 LOG_ENABLED = True
-LOG_FILE = 'result.log'
+# LOG_FILE = 'result.log'
 LOG_ENCODING = 'utf-8'
-LOG_LEVEL = logging.ERROR
+LOG_LEVEL = logging.DEBUG
 LOG_FORMAT = '%(asctime)s %(filename)s[line:%(lineno)d] %(levelname)s %(message)s'
 LOG_DATEFORMAT = '%Y-%m-%d %H:%M:%S'
 LOG_STDOUT = False
@@ -85,8 +88,8 @@ FILES_STORE = '.'
 ITEM_PIPELINES = {
     # 'audio_video_get.pipelines.AudioVideoGetPipeline': 300,
     # 'scrapy.pipelines.files.FilesPipeline': 200,
-    'audio_video_get.pipelines.ToutiaoPipeline': 100,
-    'audio_video_get.pipelines.ToutiaoFilePipeline': 200,
+    # 'audio_video_get.pipelines.ToutiaoPipeline': 100,
+    # 'audio_video_get.pipelines.ToutiaoFilePipeline': 200,
 }
 
 # Enable and configure the AutoThrottle extension (disabled by default)
@@ -131,4 +134,3 @@ USER_AGENTS = [
         "Mozilla/5.0 (Windows NT 6.2; WOW64) AppleWebKit/535.24 (KHTML, like Gecko) Chrome/19.0.1055.1 Safari/535.24",
         "Mozilla/5.0 (Windows NT 6.1; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/57.0.2987.133 Safari/537.36",
     ]
-

@@ -15,14 +15,14 @@ from scrapy.conf import settings
 from scrapy.exceptions import IgnoreRequest
 
 
-class DupFilterMiddleware(object):
+class TouTiaoDupFilterMiddleware(object):
     def __init__(self):
         self.client = MongoClient(settings['MONGODB_SERVER'], settings['MONGODB_PORT'])
         self.db = self.client.get_database(settings['MONGODB_DB'])
         self.col = self.db.get_collection(settings['MONGODB_COLLECTION'])
 
     def process_request(self, request, spider):
-        if self.col.find_one({'$and': [{'unique_url': request.url}, {'download': 1}]}):
+        if self.col.find_one({'$and': [{'spider': spider.name}, {'unique_url': request.url}, {'download': 1}]}):
             logging.warning('the video record is downloaded, unique url is {0}'.format(request.url))
             raise IgnoreRequest()
 

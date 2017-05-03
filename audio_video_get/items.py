@@ -29,3 +29,30 @@ class TouTiaoItem(scrapy.Item):
     file_paths = scrapy.Field()
     unique_url = scrapy.Field()
 
+
+class YouKuItem(scrapy.Item):
+    # define the fields for your item here like:
+    # name = scrapy.Field()
+    # video_url = scrapy.Field()
+    # name = scrapy.Field()
+    # intro = scrapy.Field()
+    # album = scrapy.Field()
+    # author = scrapy.Field()
+    # author_id = scrapy.Field()
+    # file_urls = scrapy.Field()
+    # files = scrapy.Field()
+    # file_name = scrapy.Field()
+    # file_paths = scrapy.Field()
+    # unique_url = scrapy.Field()
+    # blocks = scrapy.Field()
+    isVideo = scrapy.Field()
+    url = scrapy.Field()
+    blocks = scrapy.Field()
+    host = scrapy.Field()
+    localDir = scrapy.Field()
+    downloaded = scrapy.Field()
+    info = scrapy.Field()
+    stack = scrapy.Field()
+    file = scrapy.Field()
+
+

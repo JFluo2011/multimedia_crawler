@@ -9,6 +9,7 @@ import shutil
 import logging
 
 import scrapy
+import requests
 from scrapy.pipelines.files import FilesPipeline
 from scrapy.exceptions import DropItem
 from pymongo import MongoClient
@@ -66,6 +67,34 @@ class ToutiaoPipeline(object):
         # self.col.update({'download': -1}, {'$set': {'download': '0'}})
 
 
+class YoukuPipeline(object):
+    def __init__(self):
+        self.client = MongoClient(settings['MONGODB_SERVER'], settings['MONGODB_PORT'])
+        self.db = self.client.get_database(settings['MONGODB_DB'])
+        self.col = self.db.get_collection(settings['MONGODB_COLLECTION'])
+        self.col.ensure_index('url', unique=True)
+
+    def process_item(self, item, spider):
+        try:
+            data = {
+                'url': item['url'],
+                'file': item['file'],
+                'isVideo': item['isVideo'],
+                'host': item['host'],
+                'localDir': item['localDir'],
+                'downloaded': item['downloaded'],
+                'info': item['info'],
+                'stack': item['stack'],
+                'blocks': item['blocks'],
+            }
+            # self.col.update({'unique_url': item['unique_url']}, data, upsert=True)
+            self.col.insert(data)
+        except Exception, err:
+            logging.error(str(err))
+            raise DropItem(str(err))
+        return item
+
+
 class ToutiaoFilePipeline(FilesPipeline):
     def __init__(self, *args, **kwargs):
         super(ToutiaoFilePipeline, self).__init__(*args, **kwargs)
@@ -100,13 +129,14 @@ class ToutiaoFilePipeline(FilesPipeline):
         if not file_paths:
             self.col.update({'unique_url': item['unique_url']}, {'$set': {'download': -1}})
             raise DropItem("Item contains no files")
-        item['file_paths'] = self.__move_file(file_paths[0])
+        # item['file_paths'] = self.__move_file(file_paths[0])
+        item['file_paths'] = ''
         item['file_name'] = os.path.split(file_paths[0])[0]
         self.col.update({'unique_url': item['unique_url']},
                         {'$set': {
                             'download': 1,
                             'file_name': item['file_name'],
-                            'file_paths': item['file_paths']
+                            # 'file_paths': item['file_paths']
                         }})
         return item
 
@@ -118,3 +148,38 @@ class ToutiaoFilePipeline(FilesPipeline):
     #     logging.error(os.path.join(path, file_name))
     #     return os.path.join(path, file_name)
     #     # return '{path}/{file_name}'.format(path=path, file_name=file_name)
+
+
+class YoukuFilePipeline(FilesPipeline):
+    def __init__(self, *args, **kwargs):
+        super(YoukuFilePipeline, self).__init__(*args, **kwargs)
+        self.client = MongoClient(settings['MONGODB_SERVER'], settings['MONGODB_PORT'])
+        self.db = self.client.get_database(settings['MONGODB_DB'])
+        self.col = self.db.get_collection(settings['MONGODB_COLLECTION'])
+        self.item = TouTiaoItem()
+
+    def _handle_redirect(self, file_url):
+        response = requests.head(file_url)
+        if response.status_code == 302:
+            file_url = response.headers["Location"]
+        return file_url
+
+    def get_media_requests(self, item, info):
+        self.item = item
+        for file_url in item['file_urls']:
+            redirect_url = self._handle_redirect(file_url)
+            yield scrapy.Request(redirect_url)
+
+    def item_completed(self, results, item, info):
+        file_paths = [x['path'].replace('/', os.sep) for ok, x in results if ok]
+        if not file_paths:
+            self.col.update({'unique_url': item['unique_url']}, {'$set': {'download': -1}})
+            raise DropItem("Item contains no files")
+        item['file_paths'] = ''
+        item['file_name'] = os.path.split(file_paths[0])[0]
+        self.col.update({'unique_url': item['unique_url']},
+                        {'$set': {
+                            'download': 1,
+                            'file_name': item['file_name'],
+                        }})
+        return item

@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 import re
+import os
 import math
 import time
 import json
@@ -21,6 +22,21 @@ class ToutiaoSpider(scrapy.Spider):
     name = "toutiao"
     download_delay = 2
     # FILES_STORE = os.path.join(settings['BASE_PATH'], name)
+    custom_settings = {
+        'FILES_STORE': 'Video/toutiao',
+        'ITEM_PIPELINES': {
+            # 'scrapy.pipelines.files.FilesPipeline': 200,
+            'audio_video_get.pipelines.ToutiaoPipeline': 100,
+            'audio_video_get.pipelines.ToutiaoFilePipeline': 200,
+        },
+        'DOWNLOADER_MIDDLEWARES': {
+            'audio_video_get.middlewares.RotateUserAgentMiddleware': 400,
+            'audio_video_get.middlewares.TouTiaoDupFilterMiddleware': 1,
+        },
+    }
+    files_store = os.path.join(os.path.basename('.'), custom_settings['FILES_STORE'])
+    if not os.path.exists(files_store):
+        os.makedirs(files_store)
 
     def __init__(self):
         super(ToutiaoSpider, self).__init__()

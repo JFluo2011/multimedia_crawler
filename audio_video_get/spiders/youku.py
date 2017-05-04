@@ -23,10 +23,10 @@ class YoukuSpider(scrapy.Spider):
             'audio_video_get.pipelines.YoukuPipeline': 100,
             # 'audio_video_get.pipelines.YoukuFilePipeline': 200,
         },
-        # 'DOWNLOADER_MIDDLEWARES': {
-        #     # 'audio_video_get.middlewares.RotateUserAgentMiddleware': 400,
-        #     # 'audio_video_get.middlewares.TouTiaoDupFilterMiddleware': 1,
-        # },
+        'DOWNLOADER_MIDDLEWARES': {
+            'audio_video_get.middlewares.RotateUserAgentMiddleware': 400,
+            # 'audio_video_get.middlewares.TouTiaoDupFilterMiddleware': 1,
+        },
     }
     # files_store = os.path.join(os.path.basename('.'), custom_settings['FILES_STORE'])
     # if not os.path.exists(files_store):
@@ -38,21 +38,8 @@ class YoukuSpider(scrapy.Spider):
                     re.findall(r'body class="yk-w970" data-spm="(\d+)"', response.body)[0] + '.0.0')
         }
         url = 'http://i.youku.com/u/UMzE4MTU1MDEwMA==/videos'
-        yield scrapy.FormRequest(url, method='GET', formdata=params, callback=self.parse_page_list)
-
-    def parse_page_list(self, response):
-        self.parse_video_list(response)
-        pages = response.xpath('//ul[@class="yk-pages"]/li').xpath('.//a/@href').extract()
-        for page in pages[:-1]:
-            # m, s = page.split('?', 2)
-            url = 'http://i.youku.com' + page
-            # s = '{"' + s + '"}'
-            # s = s.replace('=', '":"')
-            # s = s.replace('&', '","')
-            # params = eval(s)
-            # params['spm'] = response.url.split('=')[-1]
-            # yield scrapy.FormRequest(url, method='GET', formdata=params, callback=self.parse_video_list)
-            yield scrapy.Request(url=url,  callback=self.parse_video_list)
+        yield scrapy.FormRequest(url, method='GET', formdata=params, meta={'first_page': True},
+                                 callback=self.parse_video_list)
 
     def parse_video_list(self, response):
         sel_video_list = response.xpath('//div[@class="v va"]')
@@ -63,11 +50,18 @@ class YoukuSpider(scrapy.Spider):
             item['info'] = ''
             item['stack'] = []
             item['downloaded'] = 0
-            item['localDir'] = ''
+            # item['localDir'] = ''
+            item['localDir'] = '/data/worker/spider/youku'
             url = sel.xpath('div[@class="v-link"]/a/@href').extract()[0]
             item['url'] = url
             item['file'] = get_md5(url)
             yield scrapy.Request(url=url, meta={'item': item}, callback=self.parse_video_url)
+        if response.meta['first_page']:
+            pages = response.xpath('//ul[@class="yk-pages"]/li').xpath('.//a/@href').extract()
+            for page in pages[:-1]:
+                url = 'http://i.youku.com' + page
+                # yield scrapy.FormRequest(url, method='GET', formdata=params, callback=self.parse_video_list)
+                yield scrapy.Request(url=url, meta={'first_page': False}, callback=self.parse_video_list)
 
     def parse_video_url(self, response):
         item = response.meta['item']
@@ -95,6 +89,7 @@ class YoukuSpider(scrapy.Spider):
             # r = re.findall(r'"cdn_url":"(.*?hd=0.*?)"', json_data)
             segs = json_data['data']['stream'][0]['segs']
             item['blocks'] = [seg['cdn_url'] for seg in segs]
+            item['file'] += '.' + re.findall(r'st/(.*?)/fileid', item['blocks'][0])[0]
             return item
         except Exception, err:
             print str(err)

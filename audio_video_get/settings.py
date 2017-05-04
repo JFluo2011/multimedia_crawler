@@ -67,9 +67,9 @@ DOWNLOADER_MIDDLEWARES = {
 
 # log
 LOG_ENABLED = True
-# LOG_FILE = 'result.log'
+LOG_FILE = 'logs/youku.log'
 LOG_ENCODING = 'utf-8'
-LOG_LEVEL = logging.DEBUG
+LOG_LEVEL = logging.INFO
 LOG_FORMAT = '%(asctime)s %(filename)s[line:%(lineno)d] %(levelname)s %(message)s'
 LOG_DATEFORMAT = '%Y-%m-%d %H:%M:%S'
 LOG_STDOUT = False

@@ -16,43 +16,52 @@ class AudioVideoGetItem(scrapy.Item):
 
 class TouTiaoItem(scrapy.Item):
     # define the fields for your item here like:
-    # name = scrapy.Field()
-    video_url = scrapy.Field()
-    name = scrapy.Field()
-    intro = scrapy.Field()
-    album = scrapy.Field()
-    author = scrapy.Field()
-    author_id = scrapy.Field()
-    file_urls = scrapy.Field()
-    files = scrapy.Field()
-    file_name = scrapy.Field()
-    file_paths = scrapy.Field()
-    unique_url = scrapy.Field()
-
-
-class YouKuItem(scrapy.Item):
-    # define the fields for your item here like:
-    # name = scrapy.Field()
-    # video_url = scrapy.Field()
-    # name = scrapy.Field()
-    # intro = scrapy.Field()
-    # album = scrapy.Field()
-    # author = scrapy.Field()
-    # author_id = scrapy.Field()
     # file_urls = scrapy.Field()
     # files = scrapy.Field()
     # file_name = scrapy.Field()
     # file_paths = scrapy.Field()
-    # unique_url = scrapy.Field()
-    # blocks = scrapy.Field()
-    isVideo = scrapy.Field()
+    media_type = scrapy.Field()
     url = scrapy.Field()
-    blocks = scrapy.Field()
+    media_urls = scrapy.Field()
     host = scrapy.Field()
-    localDir = scrapy.Field()
-    downloaded = scrapy.Field()
+    file_dir = scrapy.Field()
+    download = scrapy.Field()
     info = scrapy.Field()
     stack = scrapy.Field()
-    file = scrapy.Field()
+    file_name = scrapy.Field()
+
+
+class YouKuJiKeItem(scrapy.Item):
+    # define the fields for your item here like:
+    # file_urls = scrapy.Field()
+    # files = scrapy.Field()
+    # file_name = scrapy.Field()
+    # file_paths = scrapy.Field()
+    media_type = scrapy.Field()
+    url = scrapy.Field()
+    media_urls = scrapy.Field()
+    host = scrapy.Field()
+    file_dir = scrapy.Field()
+    download = scrapy.Field()
+    info = scrapy.Field()
+    stack = scrapy.Field()
+    file_name = scrapy.Field()
+
+
+class WeiXinErGengItem(scrapy.Item):
+    # define the fields for your item here like:
+    media_type = scrapy.Field()
+    url = scrapy.Field()
+    media_urls = scrapy.Field()
+    host = scrapy.Field()
+    file_dir = scrapy.Field()
+    download = scrapy.Field()
+    info = scrapy.Field()
+    stack = scrapy.Field()
+    file_name = scrapy.Field()
+    # file_urls = scrapy.Field()
+    # files = scrapy.Field()
+    # file_name = scrapy.Field()
+    # file_paths = scrapy.Field()
 
 

@@ -28,46 +28,30 @@ class ToutiaoPipeline(object):
         self.client = MongoClient(settings['MONGODB_SERVER'], settings['MONGODB_PORT'])
         self.db = self.client.get_database(settings['MONGODB_DB'])
         self.col = self.db.get_collection(settings['MONGODB_COLLECTION'])
-        self.col.ensure_index('unique_url', unique=True)
-
-    def open_spider(self, spider):
-        pass
-        # self.col.remove({'download': -1})
-        # print 'downloading: ', (self.col.find({'download': 'downloading'}))
-        # self.col.remove({'download': 'downloading'})
+        self.col.ensure_index('url', unique=True)
 
     def process_item(self, item, spider):
         try:
             data = {
-                'unique_url': item['unique_url'],
-                'name': item['name'],
-                'intro': item['intro'],
-                'album': item['album'],
-                'author': item['author'],
-                'author_id': item['author_id'],
-                'spider': spider.name,
-                'download': 0,
-                'file_name': '',
-                'file_paths': '',
-                'video_url': item['video_url'],
+                'url': item['url'],
+                'file_name': item['file_name'],
+                'media_type': item['media_type'],
+                'host': item['host'],
+                'file_dir': item['file_dir'],
+                'download': item['download'],
+                'info': item['info'],
+                'stack': item['stack'],
+                'media_urls': item['media_urls'],
             }
-            self.col.update({'unique_url': item['unique_url']}, data, upsert=True)
+            self.col.update({'url': item['url']}, data, upsert=True)
             # self.col.insert(data)
         except Exception, err:
             logging.error(str(err))
             raise DropItem(str(err))
         return item
 
-    def close_spider(self, spider):
-        pass
-        # for r in self.col.find({'download': 'downloading'}):
-        #     if os.path.exists(r['file_paths']):
-        #         os.remove(r['file_paths'])
-        # self.col.update({'download': 'downloading'}, {'$set': {'download': '0'}})
-        # self.col.update({'download': -1}, {'$set': {'download': '0'}})
 
-
-class YoukuPipeline(object):
+class YouKuJiKePipeline(object):
     def __init__(self):
         self.client = MongoClient(settings['MONGODB_SERVER'], settings['MONGODB_PORT'])
         self.db = self.client.get_database(settings['MONGODB_DB'])
@@ -78,17 +62,45 @@ class YoukuPipeline(object):
         try:
             data = {
                 'url': item['url'],
-                'file': item['file'],
-                'isVideo': item['isVideo'],
+                'file_name': item['file_name'],
+                'media_type': item['media_type'],
                 'host': item['host'],
-                'localDir': item['localDir'],
-                'downloaded': item['downloaded'],
+                'file_dir': item['file_dir'],
+                'download': item['download'],
                 'info': item['info'],
                 'stack': item['stack'],
-                'blocks': item['blocks'],
+                'media_urls': item['media_urls'],
             }
-            # self.col.update({'unique_url': item['unique_url']}, data, upsert=True)
-            self.col.insert(data)
+            self.col.update({'url': item['url']}, data, upsert=True)
+            # self.col.insert(data)
+        except Exception, err:
+            logging.error(str(err))
+            raise DropItem(str(err))
+        return item
+
+
+class WeiXinErGengPipeline(object):
+    def __init__(self):
+        self.client = MongoClient(settings['MONGODB_SERVER'], settings['MONGODB_PORT'])
+        self.db = self.client.get_database(settings['MONGODB_DB'])
+        self.col = self.db.get_collection(settings['MONGODB_COLLECTION'])
+        self.col.ensure_index('url', unique=True)
+
+    def process_item(self, item, spider):
+        try:
+            data = {
+                'url': item['url'],
+                'file_name': item['file_name'],
+                'media_type': item['media_type'],
+                'host': item['host'],
+                'file_dir': item['file_dir'],
+                'download': item['download'],
+                'info': item['info'],
+                'stack': item['stack'],
+                'media_urls': item['media_urls'],
+            }
+            self.col.update({'url': item['url']}, data, upsert=True)
+            # self.col.insert(data)
         except Exception, err:
             logging.error(str(err))
             raise DropItem(str(err))
@@ -150,9 +162,9 @@ class ToutiaoFilePipeline(FilesPipeline):
     #     # return '{path}/{file_name}'.format(path=path, file_name=file_name)
 
 
-class YoukuFilePipeline(FilesPipeline):
+class YouKuJiKeFilePipeline(FilesPipeline):
     def __init__(self, *args, **kwargs):
-        super(YoukuFilePipeline, self).__init__(*args, **kwargs)
+        super(YouKuJiKeFilePipeline, self).__init__(*args, **kwargs)
         self.client = MongoClient(settings['MONGODB_SERVER'], settings['MONGODB_PORT'])
         self.db = self.client.get_database(settings['MONGODB_DB'])
         self.col = self.db.get_collection(settings['MONGODB_COLLECTION'])

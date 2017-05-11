@@ -22,8 +22,52 @@ class TouTiaoDupFilterMiddleware(object):
         self.col = self.db.get_collection(settings['MONGODB_COLLECTION'])
 
     def process_request(self, request, spider):
-        if self.col.find_one({'$and': [{'spider': spider.name}, {'unique_url': request.url}, {'download': 1}]}):
-            logging.warning('the video record is downloaded, unique url is {0}'.format(request.url))
+        if self.col.find_one({'$and': [
+            {'host': spider.name},
+            {'url': request.url},
+            # {'download': {'$in': [0, 1, 2]}}
+            {'download': {'$ne': -1}}
+        ]}):
+            logging.warning('the page is crawled, url is {0}'.format(request.url))
+            raise IgnoreRequest()
+
+        return None
+
+
+class YouKuJiKeDupFilterMiddleware(object):
+    def __init__(self):
+        self.client = MongoClient(settings['MONGODB_SERVER'], settings['MONGODB_PORT'])
+        self.db = self.client.get_database(settings['MONGODB_DB'])
+        self.col = self.db.get_collection(settings['MONGODB_COLLECTION'])
+
+    def process_request(self, request, spider):
+        if self.col.find_one({'$and': [
+            {'host': spider.name},
+            {'url': request.url},
+            # {'download': {'$in': [0, 1, 2]}}
+            {'download': {'$ne': -1}}
+        ]}):
+            logging.warning('the page is crawled, url is {0}'.format(request.url))
+            raise IgnoreRequest()
+
+        return None
+
+
+class WeiXinErGengDupFilterMiddleware(object):
+    def __init__(self):
+        self.client = MongoClient(settings['MONGODB_SERVER'], settings['MONGODB_PORT'])
+        self.db = self.client.get_database(settings['MONGODB_DB'])
+        self.col = self.db.get_collection(settings['MONGODB_COLLECTION'])
+
+    def process_request(self, request, spider):
+        # if self.col.find_one({'$and': [{'host': spider.name}, {'url': request.url}, {'download': 1}]}):
+        if self.col.find_one({'$and': [
+            {'host': spider.name},
+            {'url': request.url},
+            # {'download': {'$in': [0, 1, 2]}}
+            {'download': {'$ne': -1}}
+        ]}):
+            logging.warning('the page is crawled, url is {0}'.format(request.url))
             raise IgnoreRequest()
 
         return None
@@ -86,3 +130,17 @@ class RotateUserAgentMiddleware(UserAgentMiddleware):
 
     # the default user_agent_list composes chrome,I E,firefox,Mozilla,opera,netscape
     # for more user agent strings,you can find it in http://www.useragentstring.com/pages/useragentstring.php
+
+
+class WeiXinErGengUserAgentMiddleware(UserAgentMiddleware):
+    def __init__(self, user_agent=''):
+        super(WeiXinErGengUserAgentMiddleware, self).__init__()
+        self.user_agent = user_agent
+
+    def process_request(self, request, spider):
+        if request.url.startswith('http://chuansong.me'):
+            ua = random.choice(settings['USER_AGENTS'])
+        else:
+            ua = ('Mozilla/5.0 (Linux; Android 6.0; Nexus 5 Build/MRA58N) '
+                  'AppleWebKit/537.36 (KHTML, like Gecko) Chrome/57.0.2987.133 Mobile Safari/537.36')
+        request.headers.setdefault('User-Agent', ua)

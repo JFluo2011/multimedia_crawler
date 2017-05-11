@@ -67,9 +67,10 @@ DOWNLOADER_MIDDLEWARES = {
 
 # log
 LOG_ENABLED = True
-LOG_FILE = 'logs/youku.log'
+# LOG_FILE = 'logs/youku.log'
+# LOG_FILE = 'logs/weixin_ergeng.log'
 LOG_ENCODING = 'utf-8'
-LOG_LEVEL = logging.INFO
+LOG_LEVEL = logging.DEBUG
 LOG_FORMAT = '%(asctime)s %(filename)s[line:%(lineno)d] %(levelname)s %(message)s'
 LOG_DATEFORMAT = '%Y-%m-%d %H:%M:%S'
 LOG_STDOUT = False

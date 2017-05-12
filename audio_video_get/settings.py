@@ -10,12 +10,8 @@
 #     http://scrapy.readthedocs.org/en/latest/topics/spider-middleware.html
 import os
 import logging
-try:
-    from config import *
-except:
-    pass
 
-BASE_PATH = os.path.join(os.path.abspath('.'), 'Video')
+BASE_PATH = os.path.join(os.path.abspath('.'))
 BOT_NAME = 'audio_video_get'
 
 SPIDER_MODULES = ['audio_video_get.spiders']
@@ -135,3 +131,8 @@ USER_AGENTS = [
         "Mozilla/5.0 (Windows NT 6.2; WOW64) AppleWebKit/535.24 (KHTML, like Gecko) Chrome/19.0.1055.1 Safari/535.24",
         "Mozilla/5.0 (Windows NT 6.1; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/57.0.2987.133 Safari/537.36",
     ]
+
+try:
+    from config import *
+except:
+    pass

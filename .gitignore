@@ -24,3 +24,4 @@ logs
 # project
 local_config.py
 result.log
+*-bak.py

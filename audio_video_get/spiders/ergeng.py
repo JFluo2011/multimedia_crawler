@@ -23,8 +23,9 @@ class ErGengSpider(CrawlSpider):
 
     rules = (
         Rule(
-            LinkExtractor(allow=('www.ergengtv.com/video/\d+.html', )),
-            callback='parse_items',
+            # LinkExtractor(allow=('www.ergengtv.com/video/\d+.html', )),
+            LinkExtractor(allow=('http://www.ergengtv.com/video/list/0_.*?.html', )),
+            callback='parse_pages',
             follow=True,
         ),
     )
@@ -43,19 +44,23 @@ class ErGengSpider(CrawlSpider):
     definitionCount = 0
     video_url = 'http://api.letvcloud.com/gpc.php'
 
+    def parse_pages(self, response):
+        sel_list = response.xpath('//li[@class="eg-border new"]')
+        for sel in sel_list:
+            item = ErGengItem()
+            item['host'] = 'ergeng'
+            item['media_type'] = 'video'
+            item['stack'] = []
+            item['download'] = 0
+            item['file_dir'] = os.path.join(settings['FILES_STORE'], self.name)
+            item['url'] = 'http:' + sel.xpath('.//div[1]/a/@href').extract()[0]
+            item['file_name'] = get_md5(item['url'])
+            yield scrapy.Request(url=item['url'], meta={'item': item}, callback=self.parse_items)
+
     def parse_items(self, response):
-        # sel = response.xpath('//div[contains(@class, "new-video-info")')
-        item = ErGengItem()
-        item['host'] = 'ergeng'
-        item['media_type'] = 'video'
-        item['stack'] = []
-        item['download'] = 0
-        item['file_dir'] = os.path.join(settings['FILES_STORE'], self.name)
-        item['url'] = response.url
-        item['file_name'] = get_md5(item['url'])
+        item = response.meta['item']
         try:
             item['info'] = {
-                # 'title': sel.xpath('./h3/text()').extract()[0].strip(),
                 'title': re.findall(r'"user_nickname": "(.*?)"', response.body)[0],
                 'link': response.url,
                 'date': time.strftime('%Y-%m-%d %H:%M:%S',
@@ -73,8 +78,8 @@ class ErGengSpider(CrawlSpider):
         json_data = json.loads(response.body[response.body.find('(') + 1: -1])
         try:
             # r = re.findall(r'"cdn_url":"(.*?hd=0.*?)"', json_data)
-            segs = json_data['data']['videoinfo']['medialist'][0]['urllist']
-            item['media_urls'] = [base64.b64decode(seg['url']) for seg in segs]
+            # segs = json_data['data']['videoinfo']['medialist'][0]['urllist'][0]
+            item['media_urls'] = [base64.b64decode(json_data['data']['videoinfo']['medialist'][0]['urllist'][0]['url'])]
             item['file_name'] += '.' + json_data['data']['videoinfo']['title'].split('.')[-1]
             return item
         except Exception, err:

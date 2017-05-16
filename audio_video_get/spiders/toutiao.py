@@ -1,14 +1,15 @@
 # -*- coding: utf-8 -*-
 import re
+import os
 import math
 import time
 import json
 import random
 import binascii
 import base64
-from urlparse import urljoin
 
 import scrapy
+from scrapy.conf import settings
 
 from ..common import get_md5
 from ..items import TouTiaoItem
@@ -48,7 +49,8 @@ class ToutiaoSpider(scrapy.Spider):
                 item['download'] = 0
                 item['host'] = 'toutiao'
                 item['media_type'] = 'video'
-                item['file_dir'] = '/data/worker/spider/toutiao'
+                # item['file_dir'] = '/data/worker/spider/toutiao'
+                item['file_dir'] = os.path.join(settings['FILES_STORE'], self.name)
                 if 'item_id' in data:
                     item['url'] = 'http://www.toutiao.com/i' + data['item_id'] + '/'
                 else:

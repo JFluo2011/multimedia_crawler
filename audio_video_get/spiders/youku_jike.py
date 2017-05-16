@@ -1,9 +1,11 @@
 # -*- coding: utf-8 -*-
 import re
+import os
 import time
 import json
 
 import scrapy
+from scrapy.conf import settings
 from scrapy.spiders import CrawlSpider, Rule
 from scrapy.linkextractors import LinkExtractor
 
@@ -45,7 +47,8 @@ class YouKuJiKeSpider(CrawlSpider):
             item['media_type'] = 'video'
             item['stack'] = []
             item['download'] = 0
-            item['file_dir'] = r'/data/worker/spider/youku_jike'
+            # item['file_dir'] = r'/data/worker/spider/youku_jike'
+            item['file_dir'] = os.path.join(settings['FILES_STORE'], self.name)
             # item['file_dir'] = r'D:\python\scrapy\audio_video_get\Video\youku_jike'
             item['url'] = 'http:' + sel.xpath('div[@class="v-link"]/a/@href').extract()[0]
             item['file_name'] = get_md5(item['url'])

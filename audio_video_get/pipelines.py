@@ -141,3 +141,31 @@ class YouKuJiKeFilePipeline(FilesPipeline):
                             'file_name': item['file_name'],
                         }})
         return item
+
+
+class ErGengPipeline(object):
+    def __init__(self):
+        self.client = MongoClient(settings['MONGODB_SERVER'], settings['MONGODB_PORT'])
+        self.db = self.client.get_database(settings['MONGODB_DB'])
+        self.col = self.db.get_collection(settings['MONGODB_COLLECTION'])
+        self.col.ensure_index('url', unique=True)
+
+    def process_item(self, item, spider):
+        try:
+            data = {
+                'url': item['url'],
+                'file_name': item['file_name'],
+                'media_type': item['media_type'],
+                'host': item['host'],
+                'file_dir': item['file_dir'],
+                'download': item['download'],
+                'info': item['info'],
+                'stack': item['stack'],
+                'media_urls': item['media_urls'],
+            }
+            self.col.update({'url': item['url']}, data, upsert=True)
+            # self.col.insert(data)
+        except Exception, err:
+            logging.error(str(err))
+            raise DropItem(str(err))
+        return item

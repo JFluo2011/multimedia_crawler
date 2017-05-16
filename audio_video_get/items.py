@@ -65,3 +65,20 @@ class WeiXinErGengItem(scrapy.Item):
     # file_paths = scrapy.Field()
 
 
+class ErGengItem(scrapy.Item):
+    # define the fields for your item here like:
+    media_type = scrapy.Field()
+    url = scrapy.Field()
+    media_urls = scrapy.Field()
+    host = scrapy.Field()
+    file_dir = scrapy.Field()
+    download = scrapy.Field()
+    info = scrapy.Field()
+    stack = scrapy.Field()
+    file_name = scrapy.Field()
+    # file_urls = scrapy.Field()
+    # files = scrapy.Field()
+    # file_name = scrapy.Field()
+    # file_paths = scrapy.Field()
+
+

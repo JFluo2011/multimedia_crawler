@@ -17,7 +17,7 @@ from ..items import TouTiaoItem
 
 class ToutiaoSpider(scrapy.Spider):
     name = "toutiao"
-    download_delay = 4
+    download_delay = 10
     user_ids = ['6975800262', '50590890693', '5857206714']
     base_url = 'http://www.toutiao.com/c/user/article/'
     custom_settings = {

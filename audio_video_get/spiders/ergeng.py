@@ -7,11 +7,11 @@ import scrapy
 from scrapy.conf import settings
 from scrapy.spiders import CrawlSpider, Rule
 from scrapy.linkextractors import LinkExtractor
+from scrapy.exceptions import CloseSpider
 
 from audio_video_get.items import ErGengItem
 from audio_video_get.players.letv_player import LetvPlayer
 from audio_video_get.players.qq_player import QQPlayer
-from audio_video_get.common import get_md5
 
 
 class ErGengSpider(CrawlSpider):
@@ -90,24 +90,13 @@ class ErGengSpider(CrawlSpider):
     def parse_video_url(self, response):
         item = response.meta['item']
         player = response.meta['player']
-        # item['media_urls'], item['file_name'] = self.player.get_video_info(response)
         code, item['media_urls'], item['file_name'] = player.get_video_info(response)
         if code == 10071:
-            url = response.meta['url']
-            method = response.meta['method']
-            params = response.meta['params']
-            meta = {
-                'player': player,
-                'url': url,
-                'method': method,
-                'params': params,
-                'item': item,
-            }
-            yield scrapy.FormRequest(url=url, method=method, meta=meta, formdata=params,
-                                     callback=self.parse_video_url)
+            self.logger.error('Anti-Spider, error code: {}'.format(code))
+            raise CloseSpider('Anti-Spider')
         elif code == 0:
             if item['media_urls'] is not None:
-                yield item
+                return item
 
     def __get_player(self, page_url, response):
         if re.findall(r'letv.com', response.body):

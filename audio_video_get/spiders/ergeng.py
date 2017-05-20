@@ -2,29 +2,29 @@
 import re
 import os
 import time
-import json
-import random
-import base64
 
 import scrapy
 from scrapy.conf import settings
 from scrapy.spiders import CrawlSpider, Rule
 from scrapy.linkextractors import LinkExtractor
 
-from ..items import ErGengItem
-from ..common import get_md5
+from audio_video_get.items import ErGengItem
+from audio_video_get.players.letv_player import LetvPlayer
+from audio_video_get.players.qq_player import QQPlayer
+from audio_video_get.common import get_md5
 
 
 class ErGengSpider(CrawlSpider):
     name = "ergeng"
-    download_delay = 2
+    download_delay = 4
     # allowed_domains = ["ergengtv.com"]
     start_urls = ['http://www.ergengtv.com/video/list/']
 
     rules = (
         Rule(
             # LinkExtractor(allow=('www.ergengtv.com/video/\d+.html', )),
-            LinkExtractor(allow=('http://www.ergengtv.com/video/list/0_.*?.html', )),
+            # LinkExtractor(allow=('http://www.ergengtv.com/video/list/0_.*?.html', )),
+            LinkExtractor(allow=('http://www.ergengtv.com/video/list/0_1.html', )),
             callback='parse_pages',
             follow=True,
         ),
@@ -41,8 +41,9 @@ class ErGengSpider(CrawlSpider):
             'audio_video_get.middlewares.ErGengDupFilterMiddleware': 1,
         },
     }
-    definitionCount = 0
-    video_url = 'http://api.letvcloud.com/gpc.php'
+
+    def __init__(self):
+        super(ErGengSpider, self).__init__()
 
     def parse_pages(self, response):
         sel_list = response.xpath('//li[@class="eg-border new"]')
@@ -54,10 +55,10 @@ class ErGengSpider(CrawlSpider):
             item['download'] = 0
             item['file_dir'] = os.path.join(settings['FILES_STORE'], self.name)
             item['url'] = 'http:' + sel.xpath('.//div[1]/a/@href').extract()[0]
-            item['file_name'] = get_md5(item['url'])
-            yield scrapy.Request(url=item['url'], meta={'item': item}, callback=self.parse_items)
+            # item['file_name'] = get_md5(item['url'])
+            yield scrapy.Request(url=item['url'], meta={'item': item}, callback=self.parse_video)
 
-    def parse_items(self, response):
+    def parse_video(self, response):
         item = response.meta['item']
         try:
             item['info'] = {
@@ -68,59 +69,63 @@ class ErGengSpider(CrawlSpider):
                 'author': re.findall(r'"title": "(.*?)"', response.body)[0],
             }
         except Exception as err:
-            self.logger.warning('page: {}, url: {}, error: {}'.format(response.url, item['url'], str(err)))
-        params = self.__get_params(response)
-        yield scrapy.FormRequest(url=self.video_url, method='GET', meta={'item': item}, formdata=params,
-                                 callback=self.parse_download_url)
+            self.logger.warning('url: {}, error: {}'.format(item['url'], str(err)))
 
-    def parse_download_url(self, response):
+        player = self.__get_player(item['url'], response)
+        if player is None:
+            self.logger.error('url: {}, error: does not match any player'.format(item['url']))
+            return
+        url, method, params = player.get_params()
+
+        meta = {
+            'player': player,
+            'url': url,
+            'method': method,
+            'params': params,
+            'item': item,
+        }
+        yield scrapy.FormRequest(url=url, method=method, meta=meta, formdata=params,
+                                 callback=self.parse_video_url)
+
+    def parse_video_url(self, response):
         item = response.meta['item']
-        json_data = json.loads(response.body[response.body.find('(') + 1: -1])
-        try:
-            # r = re.findall(r'"cdn_url":"(.*?hd=0.*?)"', json_data)
-            # segs = json_data['data']['videoinfo']['medialist'][0]['urllist'][0]
-            item['media_urls'] = [base64.b64decode(json_data['data']['videoinfo']['medialist'][0]['urllist'][0]['url'])]
-            item['file_name'] += '.' + json_data['data']['videoinfo']['title'].split('.')[-1]
-            return item
-        except Exception, err:
-            self.logger.error('url: {}, error: {}'.format(item['url'], str(err)))
+        player = response.meta['player']
+        # item['media_urls'], item['file_name'] = self.player.get_video_info(response)
+        code, item['media_urls'], item['file_name'] = player.get_video_info(response)
+        if code == 10071:
+            url = response.meta['url']
+            method = response.meta['method']
+            params = response.meta['params']
+            meta = {
+                'player': player,
+                'url': url,
+                'method': method,
+                'params': params,
+                'item': item,
+            }
+            yield scrapy.FormRequest(url=url, method=method, meta=meta, formdata=params,
+                                     callback=self.parse_video_url)
+        elif code == 0:
+            if item['media_urls'] is not None:
+                yield item
+
+    def __get_player(self, page_url, response):
+        if re.findall(r'letv.com', response.body):
+            player = self.__get_letv_player(page_url, response)
+        elif re.findall(r'v.qq.com', response.body):
+            player = self.__get_qq_player(page_url, response)
+        else:
             return None
 
-    def __get_params(self, response):
+        return player
+
+    def __get_letv_player(self, page_url, response):
         uu = re.findall(r'"uu":"(.*?)"', response.body)[0]
         lang = re.findall(r'"lang":"(.*?)"', response.body)[0]
         vu = re.findall(r'"vu":"(.*?)"', response.body)[0]
         pu = re.findall(r'"pu":(.*?)}', response.body)[0]
-        cf = 'html5'
-        ran = int(time.time())
-        sign = get_md5(''.join([str(i) for i in [cf, uu, vu, ran]]) + "fbeh5player12c43eccf2bec3300344")
-        uuid = self.__creatUuid() + '_' + str(self.definitionCount)
-        params = {
-            'ver': '2.4',
-            'page_url': response.url,
-            'uu': uu,
-            'sign': sign,
-            'lang': lang,
-            'ran': str(ran),
-            'vu': vu,
-            'pu': pu,
-            'format': 'jsonp',
-            'cf': 'html5',
-            'pver': 'H5_Vod_20170406_4.8.3',
-            'bver': 'safari9.0',
-            'uuid': uuid,
-            'pf': 'html5',
-            'spf': '0',
-            'pet': '0',
-            'callback': 'letvcloud149492509772658',
-        }
-        return params
+        return LetvPlayer(self.logger, page_url, uu=uu, vu=vu, pu=pu, lang=lang)
 
-    def __creatUuid(self):
-        a = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz"
-        a = ','.join(a).split(',')
-        b = [0] * 32
-        d = 16
-        for c in range(0,32) :
-            b[c] = a[random.randint(0,d)]
-        return ''.join(map(str,b))
+    def __get_qq_player(self, page_url, response):
+        vid = re.findall(r'vid=(.*?)[&|"]', response.body)[0]
+        return QQPlayer(self.logger, page_url, vid=vid)

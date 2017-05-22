@@ -17,8 +17,10 @@ from ..items import TouTiaoItem
 
 class ToutiaoSpider(scrapy.Spider):
     name = "toutiao"
-    download_delay = 10
-    user_ids = ['6975800262', '50590890693', '5857206714']
+    download_delay = 5
+    # user_ids = ['6975800262', '50590890693', '5857206714', '6264649967', '6373263682',
+    #             '6905052877', '6887101617', '6886776520']
+    user_ids = ['6264649967', '6373263682', '6905052877', '6887101617', '6886776520']
     base_url = 'http://www.toutiao.com/c/user/article/'
     custom_settings = {
         'FILES_STORE': 'Video/toutiao',

@@ -60,7 +60,7 @@ class WeiXinErGeng(CrawlSpider):
             }
             url = urljoin('http://chuansong.me', sel.xpath('.//a[@class="question_link"]/@href').extract()[0])
             item['url'] = url
-            item['file_name'] = get_md5(url)
+            item['file_name'] = get_md5(item['url'])
             yield scrapy.Request(url=url, meta={'item': item}, callback=self.parse_info)
 
     def parse_info(self, response):

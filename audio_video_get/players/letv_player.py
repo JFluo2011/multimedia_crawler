@@ -5,36 +5,60 @@ import json
 import random
 import base64
 
+from scrapy.exceptions import CloseSpider
+
 from base_player import BasePlayer
 from audio_video_get.common import get_md5
 
 
 class LetvPlayer(BasePlayer):
-    def get_params(self):
-        method = 'GET'
-        url = 'http://api.letvcloud.com/gpc.php'
-        params = self.__get_params()
-        return url, method, params
+    name = 'letv_player'
 
-    def get_video_info(self, response):
-        json_data = json.loads(response.body[response.body.find('(') + 1: -1])
-        code = json_data['code']
-        if code != 0:
-            self.logger.error('url: {}, code: {}'.format(self.page_url, str(code)))
-            # self.logger.error('url: {}, error: {}'.format(self.page_url, json_data['message'].decode('utf-8')))
-            return code, None, None
+    def __init__(self, logger, page_url, *args, **kwargs):
+        super(LetvPlayer, self).__init__(logger, page_url, *args, **kwargs)
+        self.url = 'http://api.letvcloud.com/gpc.php'
+        self.method = 'GET'
+        self.params = self.__get_params()
+
+    def parse_video(self, response):
+        item = response.meta['item']
+        if not self.get_json(response):
+            return
+        if not self.get_media_urls():
+            return
+        item['media_urls'] = self.media_urls
+        item['file_name'] = self.file_name
+        return item
+
+    def get_media_urls(self):
         try:
-            url = base64.b64decode(json_data['data']['videoinfo']['medialist'][0]['urllist'][0]['url'])
-            file_name = (get_md5(self.page_url) +
-                         '.' + json_data['data']['videoinfo']['title'].split('.')[-1])
+            self.media_urls = [base64.b64decode(self.json_data['data']['videoinfo']['medialist'][0]['urllist'][0]['url'])]
+            self.file_name = (get_md5(self.page_url) + '.' +
+                              self.json_data['data']['videoinfo']['title'].split('.')[-1])
         except Exception, err:
             self.logger.error('url: {}, error: {}'.format(self.page_url, str(err)))
-            return code, None, None
+            return False
         else:
-            if url is None:
-                return code, None, None
-        media_urls = [url]
-        return code, media_urls, file_name
+            if self.media_urls is None:
+                self.logger.error('url: {}, error: did not get any URL in the json data'.format(self.page_url))
+                return False
+        return True
+
+    def get_json(self, response):
+        try:
+            json_data = json.loads(response.body[response.body.find('(') + 1: -1])
+            code = json_data['code']
+        except Exception as err:
+            self.logger.error('url: {}, error: {}'.format(self.page_url, str(err)))
+            return False
+        else:
+            if code != 0:
+                self.logger.error('url: {}, code: {}'.format(self.page_url, str(code)))
+                return False
+            elif code == 10071:
+                self.logger.error('Anti-Spider: close spider by self, error code: {}'.format(code))
+                raise CloseSpider('Anti-Spider')
+        return True
 
     def __get_params(self):
         uu = self.kwargs['uu']

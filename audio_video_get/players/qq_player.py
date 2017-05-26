@@ -13,29 +13,63 @@ from audio_video_get.common import get_md5
 
 class QQPlayer(BasePlayer):
     seed = "#$#@#*ad"
+    name = 'qq_player'
 
-    def get_params(self):
-        method = 'GET'
-        url = 'http://h5vv.video.qq.com/getinfo'
-        params = self.__get_params()
-        return url, method, params
+    def __init__(self, logger, page_url, *args, **kwargs):
+        super(QQPlayer, self).__init__(logger, page_url, *args, **kwargs)
+        self.url = 'http://h5vv.video.qq.com/getinfo'
+        self.method = 'GET'
+        self.params = self.__get_params()
 
-    def get_video_info(self, response):
-        guid = response.meta['guid']
-        code = -1
+    def parse_video(self, response):
+        item = response.meta['item']
+        if not self.__get_json(response):
+            return
+
+        if not self.__get_media_urls():
+            return
+        item['media_urls'] = self.media_urls
+        item['file_name'] = self.file_name
+        return item
+
+    def __get_media_urls(self):
         try:
-            json_data = json.loads(response.body[response.body.find('(') + 1: -1])
+            url = urljoin(self.json_data['vl']['vi'][0]['ul']['ui'][0]['url'], self.json_data['vl']['vi'][0]['fn'])
+            params = {
+                'vkey': self.json_data['vl']['vi'][0]['fvkey'],
+                'br': self.json_data['vl']['vi'][0]['br'],
+                'platform': '2',
+                'level': self.json_data['vl']['vi'][0]['level'],
+                'sdtfrom': 'v5010',
+                'guid': self.params['guid'],
+                # 'fmt': json_data['vl']['vi'][0]['pl'][0]['pd'][0]['fmt'],
+                'fmt': 'auto',
+            }
+            self.file_name = self.json_data['vl']['vi'][0]['fn']
         except Exception as err:
             self.logger.error('url: {}, error: {}'.format(self.page_url, str(err)))
-            return code, None, None
+            return False
         else:
-            code = json_data['exem']
+            if url is None:
+                self.logger.error('url: {}, error: did not get any URL in the json data'.format(self.page_url))
+                return False
+
+        url += '?' + '&'.join(['='.join([k, str(v)]) for k, v in params.items()])
+        self.media_urls = [url]
+        return True
+
+    def __get_json(self, response):
+        try:
+            self.json_data = json.loads(response.body[response.body.find('(') + 1: -1])
+        except Exception as err:
+            self.logger.error('url: {}, error: {}'.format(self.page_url, str(err)))
+            return False
+        else:
+            code = self.json_data['exem']
             if code != 0:
-                self.logger.warning('url: {}, exem: {}'.format(self.page_url, json_data['exem']))
-                if 'msg' in json_data:
-                    self.logger.warning('url: {}, msg: {}'.format(self.page_url, json_data['msg']))
-                return code, None, None
-        return code, self._get_video_info(guid, json_data)
+                self.logger.error('url: {}, code: {}'.format(self.page_url, str(code)))
+                return False
+        return True
 
     def __get_params(self):
         vid = self.kwargs['vid']

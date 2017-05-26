@@ -8,6 +8,7 @@ from ctypes import c_int, c_uint
 from urlparse import urljoin, urlparse
 
 import scrapy
+from scrapy.conf import settings
 from scrapy.spiders import CrawlSpider, Rule
 from scrapy.linkextractors import LinkExtractor
 
@@ -50,8 +51,7 @@ class WeiXinErGeng(CrawlSpider):
             item['host'] = 'weixin_ergeng'
             item['stack'] = []
             item['download'] = 0
-            item['file_dir'] = r'/data/worker/spider/weixin_ergeng'
-            # item['file_dir'] = r'D:\python\scrapy\audio_video_get\Video\weixin_ergeng'
+            item['file_dir'] = os.path.join(settings['FILES_STORE'], self.name)
             item['info'] = {
                 'title': sel.xpath('.//a[@class="question_link"]/text()').extract()[0].strip(),
                 'link': sel.xpath('.//a[@class="question_link"]/@href').extract()[0],

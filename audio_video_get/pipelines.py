@@ -5,6 +5,7 @@
 # Don't forget to add your pipeline to the ITEM_PIPELINES setting
 # See: http://doc.scrapy.org/en/latest/topics/item-pipeline.html
 import os
+import copy
 import logging
 
 import scrapy
@@ -15,6 +16,7 @@ from pymongo import MongoClient
 from scrapy.conf import settings
 
 from items import TouTiaoItem
+from items import AudioVideoGetItem
 
 
 class AudioVideoGetPipeline(object):
@@ -45,6 +47,52 @@ class AudioVideoGetPipeline(object):
             logging.error(str(err))
             raise DropItem(str(err))
         return item
+
+
+class IQiYiPipeline(object):
+    items = AudioVideoGetItem()
+    items['url'] = None
+
+    def __init__(self):
+        self.client = MongoClient(settings['MONGODB_SERVER'], settings['MONGODB_PORT'])
+        self.db = self.client.get_database(settings['MONGODB_DB'])
+        if 'MONGODB_USER' in settings.keys():
+            self.db.authenticate(settings['MONGODB_USER'], settings['MONGODB_PASSWORD'])
+        self.col = self.db.get_collection(settings['MONGODB_COLLECTION'])
+        self.col.ensure_index('url', unique=True)
+
+    def process_item(self, item, spider):
+        if self.items['url'] is None:
+            self.items = copy.deepcopy(item)
+        elif item['url'] == self.items['url']:
+            self.items['media_urls'].extend(item['media_urls'])
+        else:
+            self.__insert_item(item=item)
+
+    def close_spider(self, spider):
+        self.__insert_item()
+
+    def __insert_item(self, item=None):
+        try:
+            data = {
+                'url': self.items['url'],
+                'file_name': self.items['file_name'],
+                'media_type': self.items['media_type'],
+                'host': self.items['host'],
+                'file_dir': self.items['file_dir'],
+                'download': self.items['download'],
+                'info': self.items['info'],
+                'stack': self.items['stack'],
+                'media_urls': self.items['media_urls'],
+            }
+            self.col.update({'url': self.items['url']}, data, upsert=True)
+            return self.items
+            # self.col.insert(data)
+        except Exception, err:
+            logging.error(str(err))
+            raise DropItem(str(err))
+        finally:
+            self.items = copy.deepcopy(item)
 
 
 class ToutiaoPipeline(object):

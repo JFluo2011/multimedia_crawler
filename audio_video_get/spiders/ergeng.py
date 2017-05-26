@@ -7,16 +7,17 @@ import scrapy
 from scrapy.conf import settings
 from scrapy.spiders import CrawlSpider, Rule
 from scrapy.linkextractors import LinkExtractor
-from scrapy.exceptions import CloseSpider
 
 from audio_video_get.items import ErGengItem
 from audio_video_get.players.letv_player import LetvPlayer
 from audio_video_get.players.qq_player import QQPlayer
+from audio_video_get.players.ergeng_player import ErgengPlayer
+from audio_video_get.players.youku_player import YouKuPlayer
 
 
 class ErGengSpider(CrawlSpider):
     name = "ergeng"
-    download_delay = 4
+    download_delay = 10
     # allowed_domains = ["ergengtv.com"]
     start_urls = ['http://www.ergengtv.com/video/list/']
 
@@ -69,40 +70,26 @@ class ErGengSpider(CrawlSpider):
                 'author': re.findall(r'"title": "(.*?)"', response.body)[0],
             }
         except Exception as err:
-            self.logger.warning('url: {}, error: {}'.format(item['url'], str(err)))
+            self.logger.error('url: {}, error: {}'.format(item['url'], str(err)))
+            return
 
         player = self.__get_player(item['url'], response)
         if player is None:
             self.logger.error('url: {}, error: does not match any player'.format(item['url']))
             return
-        url, method, params = player.get_params()
-
-        meta = {
-            'player': player,
-            'url': url,
-            'method': method,
-            'params': params,
-            'item': item,
-        }
-        yield scrapy.FormRequest(url=url, method=method, meta=meta, formdata=params,
-                                 callback=self.parse_video_url)
-
-    def parse_video_url(self, response):
-        item = response.meta['item']
-        player = response.meta['player']
-        code, item['media_urls'], item['file_name'] = player.get_video_info(response)
-        if code == 10071:
-            self.logger.error('Anti-Spider, error code: {}'.format(code))
-            raise CloseSpider('Anti-Spider')
-        elif code == 0:
-            if item['media_urls'] is not None:
-                return item
+        yield scrapy.FormRequest(url=player.url, method=player.method, meta={'item': item},
+                                 formdata=player.params, callback=player.parse_video)
 
     def __get_player(self, page_url, response):
+        is_thirdparty = re.findall(r'"is_thirdparty"\s*:\s*(\d+)', response.body)[0]
         if re.findall(r'letv.com', response.body):
             player = self.__get_letv_player(page_url, response)
-        elif re.findall(r'v.qq.com', response.body):
+        elif re.findall(r'v.qq.com', response.body) and (is_thirdparty == '1'):
             player = self.__get_qq_player(page_url, response)
+        elif re.findall(r'player.youku.com', response.body) and (is_thirdparty == '1'):
+            player = self.__get_youku_player(page_url, response)
+        # elif is_thirdparty == '0':
+        #     player = self.__get_qq_player(page_url, response)
         else:
             return None
 
@@ -118,3 +105,19 @@ class ErGengSpider(CrawlSpider):
     def __get_qq_player(self, page_url, response):
         vid = re.findall(r'vid=(.*?)[&|"]', response.body)[0]
         return QQPlayer(self.logger, page_url, vid=vid)
+
+    def __get_youku_player(self, page_url, response):
+        player_url = re.findall(r'"(//player.youku.com/embed/.*?)"', response.body)[0]
+        if 'http' not in player_url:
+            page_url = 'http:' + player_url
+        return YouKuPlayer(self.logger, page_url, player_url=player_url)
+
+    def __get_ergeng_player(self, page_url, response):
+        # TODO: FIX
+        app_key = 'NJoeGIN8-'
+        video_id = ''
+        p = '@VERSION'
+        member_host = re.findall(r'member_host\s*=\s*"(.*?)"', response.body)[0]
+        media_id = re.findall(r'"media_id"\s*:\s*(\d+)', response.body)[0]
+        return ErgengPlayer(self.logger, page_url, app_key=app_key, video_id=video_id,
+                            member_host=member_host, media_id=media_id)

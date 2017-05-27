@@ -17,16 +17,16 @@ from audio_video_get.players.youku_player import YouKuPlayer
 
 class ErGengSpider(CrawlSpider):
     name = "ergeng"
-    download_delay = 10
-    # allowed_domains = ["ergengtv.com"]
-    start_urls = ['http://www.ergengtv.com/video/list/']
+    download_delay = 5
+    # allowed_domains = ["www.ergengtv.com"]
+    # start_urls = ['http://www.ergengtv.com/video/list/', 'http://www.ergengtv.com/project/issue/']
+    start_urls = ['http://www.ergengtv.com/project/issue/']
 
     rules = (
+        Rule(LinkExtractor(allow=('project/issue/0_\d+.html', 'video/list/0_\d+.html', ), )),
         Rule(
-            # LinkExtractor(allow=('www.ergengtv.com/video/\d+.html', )),
-            # LinkExtractor(allow=('http://www.ergengtv.com/video/list/0_.*?.html', )),
-            LinkExtractor(allow=('http://www.ergengtv.com/video/list/0_1.html', )),
-            callback='parse_pages',
+            LinkExtractor(allow=('video/\d+.html', 'project/\d+.html', )),
+            callback='parse_video',
             follow=True,
         ),
     )
@@ -43,9 +43,6 @@ class ErGengSpider(CrawlSpider):
         },
     }
 
-    def __init__(self):
-        super(ErGengSpider, self).__init__()
-
     def parse_pages(self, response):
         sel_list = response.xpath('//li[@class="eg-border new"]')
         for sel in sel_list:
@@ -60,18 +57,24 @@ class ErGengSpider(CrawlSpider):
             yield scrapy.Request(url=item['url'], meta={'item': item}, callback=self.parse_video)
 
     def parse_video(self, response):
-        item = response.meta['item']
+        item = ErGengItem()
+        item['host'] = 'ergeng'
+        item['media_type'] = 'video'
+        item['stack'] = []
+        item['download'] = 0
+        item['file_dir'] = os.path.join(settings['FILES_STORE'], self.name)
+        item['url'] = response.url
         try:
             item['info'] = {
                 'title': re.findall(r'"user_nickname": "(.*?)"', response.body)[0],
-                'link': response.url,
+                'link': item['url'],
                 'date': time.strftime('%Y-%m-%d %H:%M:%S',
                                       time.localtime(float(re.findall(r'"create_at": (\d+),', response.body)[0]))),
                 'author': re.findall(r'"title": "(.*?)"', response.body)[0],
             }
         except Exception as err:
             self.logger.error('url: {}, error: {}'.format(item['url'], str(err)))
-            return
+            # return
 
         player = self.__get_player(item['url'], response)
         if player is None:

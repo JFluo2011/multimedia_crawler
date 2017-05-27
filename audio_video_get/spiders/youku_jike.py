@@ -15,7 +15,7 @@ from ..common import get_md5
 
 class YouKuJiKeSpider(CrawlSpider):
     name = "youku_jike"
-    download_delay = 2
+    download_delay = 10
     # allowed_domains = ["youku.com"]
     start_urls = ['http://i.youku.com/u/UMzE4MTU1MDEwMA==/videos']
 

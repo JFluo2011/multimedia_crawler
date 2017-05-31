@@ -11,8 +11,8 @@ import base64
 import scrapy
 from scrapy.conf import settings
 
-from ..common import get_md5
-from ..items import TouTiaoItem
+from audio_video_get.common import get_md5
+from audio_video_get.items import AudioVideoGetItem
 
 
 class ToutiaoSpider(scrapy.Spider):
@@ -23,15 +23,12 @@ class ToutiaoSpider(scrapy.Spider):
     user_ids = ['6264649967', '6373263682', '6905052877', '6887101617', '6886776520']
     base_url = 'http://www.toutiao.com/c/user/article/'
     custom_settings = {
-        'FILES_STORE': 'Video/toutiao',
         'ITEM_PIPELINES': {
-            # 'scrapy.pipelines.files.FilesPipeline': 200,
-            'audio_video_get.pipelines.ToutiaoPipeline': 100,
-            # 'audio_video_get.pipelines.ToutiaoFilePipeline': 200,
+            'audio_video_get.pipelines.AudioVideoGetPipeline': 100,
         },
         'DOWNLOADER_MIDDLEWARES': {
             'audio_video_get.middlewares.RotateUserAgentMiddleware': 400,
-            'audio_video_get.middlewares.TouTiaoDupFilterMiddleware': 1,
+            'audio_video_get.middlewares.AudioVideoGetDupFilterMiddleware': 1,
         },
     }
 
@@ -46,7 +43,7 @@ class ToutiaoSpider(scrapy.Spider):
             max_behot_time = json_data['next']['max_behot_time']
             user_id = re.findall(r'user_id=(\d+)', response.url)[0]
             for data in json_data['data']:
-                item = TouTiaoItem()
+                item = AudioVideoGetItem()
                 item['stack'] = []
                 item['download'] = 0
                 item['host'] = 'toutiao'

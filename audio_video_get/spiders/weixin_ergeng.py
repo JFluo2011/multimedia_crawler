@@ -12,7 +12,7 @@ from scrapy.conf import settings
 from scrapy.spiders import CrawlSpider, Rule
 from scrapy.linkextractors import LinkExtractor
 
-from audio_video_get.items import WeiXinErGengItem
+from audio_video_get.items import AudioVideoGetItem
 from audio_video_get.common import get_md5
 
 seed = "#$#@#*ad"
@@ -32,22 +32,19 @@ class WeiXinErGeng(CrawlSpider):
     )
 
     custom_settings = {
-        # 'FILES_STORE': '/data/worker/spider/weixin_ergeng',
         'ITEM_PIPELINES': {
-            # 'scrapy.pipelines.files.FilesPipeline': 200,
-            'audio_video_get.pipelines.WeiXinErGengPipeline': 100,
-            # 'audio_video_get.pipelines.YoukuFilePipeline': 200,
+            'audio_video_get.pipelines.AudioVideoGetPipeline': 100,
         },
         'DOWNLOADER_MIDDLEWARES': {
             'audio_video_get.middlewares.WeiXinErGengUserAgentMiddleware': 400,
-            'audio_video_get.middlewares.WeiXinErGengDupFilterMiddleware': 1,
+            'audio_video_get.middlewares.AudioVideoGetDupFilterMiddleware': 1,
         },
     }
 
     def parse_pages(self, response):
         sel_list = response.xpath('//div[@class="feed_item_question"]')
         for sel in sel_list:
-            item = WeiXinErGengItem()
+            item = AudioVideoGetItem()
             item['host'] = 'weixin_ergeng'
             item['stack'] = []
             item['download'] = 0

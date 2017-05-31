@@ -10,7 +10,7 @@ import scrapy
 from scrapy.conf import settings
 
 from audio_video_get.items import AudioVideoGetItem
-from ..common import get_md5
+from audio_video_get.common import get_md5
 
 
 class IQiYiSpider(scrapy.Spider):
@@ -23,13 +23,9 @@ class IQiYiSpider(scrapy.Spider):
 
     custom_settings = {
         'ITEM_PIPELINES': {
-            # 'scrapy.pipelines.files.FilesPipeline': 200,
-            # 'audio_video_get.pipelines.AudioVideoGetPipeline': 100,
             'audio_video_get.pipelines.IQiYiPipeline': 100,
-            # 'audio_video_get.pipelines.YoukuFilePipeline': 200,
         },
         'DOWNLOADER_MIDDLEWARES': {
-            # 'audio_video_get.middlewares.MobileUserAgentMiddleware': 400,
             'audio_video_get.middlewares.RotateUserAgentMiddleware': 400,
             'audio_video_get.middlewares.AudioVideoGetDupFilterMiddleware': 1,
         },

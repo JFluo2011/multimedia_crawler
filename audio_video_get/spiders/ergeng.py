@@ -1,14 +1,13 @@
 # -*- coding: utf-8 -*-
 import re
 import os
-import time
 
 import scrapy
 from scrapy.conf import settings
 from scrapy.spiders import CrawlSpider, Rule
 from scrapy.linkextractors import LinkExtractor
 
-from audio_video_get.items import ErGengItem
+from audio_video_get.items import AudioVideoGetItem
 from audio_video_get.players.letv_player import LetvPlayer
 from audio_video_get.players.qq_player import QQPlayer
 from audio_video_get.players.ergeng_player import ErgengPlayer
@@ -17,10 +16,9 @@ from audio_video_get.players.youku_player import YouKuPlayer
 
 class ErGengSpider(CrawlSpider):
     name = "ergeng"
-    download_delay = 5
+    download_delay = 10
     # allowed_domains = ["www.ergengtv.com"]
-    # start_urls = ['http://www.ergengtv.com/video/list/', 'http://www.ergengtv.com/project/issue/']
-    start_urls = ['http://www.ergengtv.com/project/issue/']
+    start_urls = ['http://www.ergengtv.com/video/list/', 'http://www.ergengtv.com/project/issue/']
 
     rules = (
         Rule(LinkExtractor(allow=('project/issue/0_\d+.html', 'video/list/0_\d+.html', ), )),
@@ -33,31 +31,16 @@ class ErGengSpider(CrawlSpider):
 
     custom_settings = {
         'ITEM_PIPELINES': {
-            # 'scrapy.pipelines.files.FilesPipeline': 200,
-            'audio_video_get.pipelines.ErGengPipeline': 100,
-            # 'audio_video_get.pipelines.YoukuFilePipeline': 200,
+            'audio_video_get.pipelines.AudioVideoGetPipeline': 100,
         },
         'DOWNLOADER_MIDDLEWARES': {
-            'audio_video_get.middlewares.ErGengUserAgentMiddleware': 400,
-            'audio_video_get.middlewares.ErGengDupFilterMiddleware': 1,
+            'audio_video_get.middlewares.MobileUserAgentMiddleware': 400,
+            'audio_video_get.middlewares.AudioVideoGetDupFilterMiddleware': 1,
         },
     }
 
-    def parse_pages(self, response):
-        sel_list = response.xpath('//li[@class="eg-border new"]')
-        for sel in sel_list:
-            item = ErGengItem()
-            item['host'] = 'ergeng'
-            item['media_type'] = 'video'
-            item['stack'] = []
-            item['download'] = 0
-            item['file_dir'] = os.path.join(settings['FILES_STORE'], self.name)
-            item['url'] = 'http:' + sel.xpath('.//div[1]/a/@href').extract()[0]
-            # item['file_name'] = get_md5(item['url'])
-            yield scrapy.Request(url=item['url'], meta={'item': item}, callback=self.parse_video)
-
     def parse_video(self, response):
-        item = ErGengItem()
+        item = AudioVideoGetItem()
         item['host'] = 'ergeng'
         item['media_type'] = 'video'
         item['stack'] = []
@@ -66,15 +49,13 @@ class ErGengSpider(CrawlSpider):
         item['url'] = response.url
         try:
             item['info'] = {
-                'title': re.findall(r'"user_nickname": "(.*?)"', response.body)[0],
+                'title': response.xpath(r'//div[contains(@class, "new-video-info")]/h3/text()').extract()[0].strip(),
                 'link': item['url'],
-                'date': time.strftime('%Y-%m-%d %H:%M:%S',
-                                      time.localtime(float(re.findall(r'"create_at": (\d+),', response.body)[0]))),
-                'author': re.findall(r'"title": "(.*?)"', response.body)[0],
+                'album': response.xpath(r'//div[contains(@class, "tj")]/text()').extract()[0].strip(),
             }
         except Exception as err:
             self.logger.error('url: {}, error: {}'.format(item['url'], str(err)))
-            # return
+            return
 
         player = self.__get_player(item['url'], response)
         if player is None:
@@ -91,8 +72,8 @@ class ErGengSpider(CrawlSpider):
             player = self.__get_qq_player(page_url, response)
         elif re.findall(r'player.youku.com', response.body) and (is_thirdparty == '1'):
             player = self.__get_youku_player(page_url, response)
-        # elif is_thirdparty == '0':
-        #     player = self.__get_qq_player(page_url, response)
+        elif is_thirdparty == '0':
+            player = self.__get_ergeng_player(page_url, response)
         else:
             return None
 
@@ -112,7 +93,7 @@ class ErGengSpider(CrawlSpider):
     def __get_youku_player(self, page_url, response):
         player_url = re.findall(r'"(//player.youku.com/embed/.*?)"', response.body)[0]
         if 'http' not in player_url:
-            page_url = 'http:' + player_url
+            player_url = 'http:' + player_url
         return YouKuPlayer(self.logger, page_url, player_url=player_url)
 
     def __get_ergeng_player(self, page_url, response):

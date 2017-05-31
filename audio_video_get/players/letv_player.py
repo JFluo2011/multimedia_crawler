@@ -39,7 +39,7 @@ class LetvPlayer(BasePlayer):
             self.logger.error('url: {}, error: {}'.format(self.page_url, str(err)))
             return False
         else:
-            if self.media_urls is None:
+            if not self.media_urls:
                 self.logger.error('url: {}, error: did not get any URL in the json data'.format(self.page_url))
                 return False
         return True

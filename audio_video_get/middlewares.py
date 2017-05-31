@@ -36,92 +36,6 @@ class AudioVideoGetDupFilterMiddleware(object):
         return None
 
 
-class TouTiaoDupFilterMiddleware(object):
-    def __init__(self):
-        self.client = MongoClient(settings['MONGODB_SERVER'], settings['MONGODB_PORT'])
-        self.db = self.client.get_database(settings['MONGODB_DB'])
-        if 'MONGODB_USER' in settings.keys():
-            self.db.authenticate(settings['MONGODB_USER'], settings['MONGODB_PASSWORD'])
-        self.col = self.db.get_collection(settings['MONGODB_COLLECTION'])
-
-    def process_request(self, request, spider):
-        if self.col.find_one({'$and': [
-            {'host': spider.name},
-            {'url': request.url},
-            # {'download': {'$in': [0, 1, 2]}}
-            {'download': {'$ne': -1}}
-        ]}):
-            logging.warning('the page is crawled, url is {0}'.format(request.url))
-            raise IgnoreRequest()
-
-        return None
-
-
-class YouKuJiKeDupFilterMiddleware(object):
-    def __init__(self):
-        self.client = MongoClient(settings['MONGODB_SERVER'], settings['MONGODB_PORT'])
-        self.db = self.client.get_database(settings['MONGODB_DB'])
-        if 'MONGODB_USER' in settings.keys():
-            self.db.authenticate(settings['MONGODB_USER'], settings['MONGODB_PASSWORD'])
-        self.col = self.db.get_collection(settings['MONGODB_COLLECTION'])
-
-    def process_request(self, request, spider):
-        if self.col.find_one({'$and': [
-            {'host': spider.name},
-            {'url': request.url},
-            # {'download': {'$in': [0, 1, 2]}}
-            {'download': {'$ne': -1}}
-        ]}):
-            logging.warning('the page is crawled, url is {0}'.format(request.url))
-            raise IgnoreRequest()
-
-        return None
-
-
-class WeiXinErGengDupFilterMiddleware(object):
-    def __init__(self):
-        self.client = MongoClient(settings['MONGODB_SERVER'], settings['MONGODB_PORT'])
-        self.db = self.client.get_database(settings['MONGODB_DB'])
-        if 'MONGODB_USER' in settings.keys():
-            self.db.authenticate(settings['MONGODB_USER'], settings['MONGODB_PASSWORD'])
-        self.col = self.db.get_collection(settings['MONGODB_COLLECTION'])
-
-    def process_request(self, request, spider):
-        # if self.col.find_one({'$and': [{'host': spider.name}, {'url': request.url}, {'download': 1}]}):
-        if self.col.find_one({'$and': [
-            {'host': spider.name},
-            {'url': request.url},
-            # {'download': {'$in': [0, 1, 2]}}
-            {'download': {'$ne': -1}}
-        ]}):
-            logging.warning('the page is crawled, url is {0}'.format(request.url))
-            raise IgnoreRequest()
-
-        return None
-
-
-class ErGengDupFilterMiddleware(object):
-    def __init__(self):
-        self.client = MongoClient(settings['MONGODB_SERVER'], settings['MONGODB_PORT'])
-        self.db = self.client.get_database(settings['MONGODB_DB'])
-        if 'MONGODB_USER' in settings.keys():
-            self.db.authenticate(settings['MONGODB_USER'], settings['MONGODB_PASSWORD'])
-        self.col = self.db.get_collection(settings['MONGODB_COLLECTION'])
-
-    def process_request(self, request, spider):
-        # if self.col.find_one({'$and': [{'host': spider.name}, {'url': request.url}, {'download': 1}]}):
-        if self.col.find_one({'$and': [
-            {'host': spider.name},
-            {'url': request.url},
-            # {'download': {'$in': [0, 1, 2]}}
-            {'download': {'$ne': -1}}
-        ]}):
-            logging.warning('the page is crawled, url is {0}'.format(request.url))
-            raise IgnoreRequest()
-
-        return None
-
-
 class AudioVideoGetSpiderMiddleware(object):
     @classmethod
     def from_crawler(cls, crawler):
@@ -187,11 +101,6 @@ class MobileUserAgentMiddleware(UserAgentMiddleware):
         self.user_agent = user_agent
 
     def process_request(self, request, spider):
-        # if request.url.startswith('http://chuansong.me'):
-        #     ua = random.choice(settings['USER_AGENTS'])
-        # else:
-        #     ua = ('Mozilla/5.0 (Linux; Android 6.0; Nexus 5 Build/MRA58N) '
-        #           'AppleWebKit/537.36 (KHTML, like Gecko) Chrome/57.0.2987.133 Mobile Safari/537.36')
         ua = ('Mozilla/5.0 (Linux; Android 6.0; Nexus 5 Build/MRA58N) '
               'AppleWebKit/537.36 (KHTML, like Gecko) Chrome/57.0.2987.133 Mobile Safari/537.36')
         request.headers.setdefault('User-Agent', ua)
@@ -208,20 +117,4 @@ class WeiXinErGengUserAgentMiddleware(UserAgentMiddleware):
         else:
             ua = ('Mozilla/5.0 (Linux; Android 6.0; Nexus 5 Build/MRA58N) '
                   'AppleWebKit/537.36 (KHTML, like Gecko) Chrome/57.0.2987.133 Mobile Safari/537.36')
-        request.headers.setdefault('User-Agent', ua)
-
-
-class ErGengUserAgentMiddleware(UserAgentMiddleware):
-    def __init__(self, user_agent=''):
-        super(ErGengUserAgentMiddleware, self).__init__()
-        self.user_agent = user_agent
-
-    def process_request(self, request, spider):
-        # if request.url.startswith('http://chuansong.me'):
-        #     ua = random.choice(settings['USER_AGENTS'])
-        # else:
-        #     ua = ('Mozilla/5.0 (Linux; Android 6.0; Nexus 5 Build/MRA58N) AppleWebKit/537.36 '
-        #           '(KHTML, like Gecko) Chrome/57.0.2987.133 Mobile Safari/537.36')
-        ua = ('Mozilla/5.0 (Linux; Android 6.0; Nexus 5 Build/MRA58N) AppleWebKit/537.36 '
-              '(KHTML, like Gecko) Chrome/57.0.2987.133 Mobile Safari/537.36')
         request.headers.setdefault('User-Agent', ua)

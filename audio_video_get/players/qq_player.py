@@ -50,7 +50,7 @@ class QQPlayer(BasePlayer):
             self.logger.error('url: {}, error: {}'.format(self.page_url, str(err)))
             return False
         else:
-            if url is None:
+            if not url:
                 self.logger.error('url: {}, error: did not get any URL in the json data'.format(self.page_url))
                 return False
 

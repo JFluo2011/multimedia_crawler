@@ -9,8 +9,8 @@ from scrapy.conf import settings
 from scrapy.spiders import CrawlSpider, Rule
 from scrapy.linkextractors import LinkExtractor
 
-from ..items import YouKuJiKeItem
-from ..common import get_md5
+from audio_video_get.items import AudioVideoGetItem
+from audio_video_get.common import get_md5
 
 
 class YouKuJiKeSpider(CrawlSpider):
@@ -29,27 +29,23 @@ class YouKuJiKeSpider(CrawlSpider):
 
     custom_settings = {
         'ITEM_PIPELINES': {
-            # 'scrapy.pipelines.files.FilesPipeline': 200,
-            'audio_video_get.pipelines.YouKuJiKePipeline': 100,
-            # 'audio_video_get.pipelines.YoukuFilePipeline': 200,
+            'audio_video_get.pipelines.AudioVideoGetPipeline': 100,
         },
         'DOWNLOADER_MIDDLEWARES': {
             'audio_video_get.middlewares.RotateUserAgentMiddleware': 400,
-            'audio_video_get.middlewares.YouKuJiKeDupFilterMiddleware': 1,
+            'audio_video_get.middlewares.AudioVideoGetDupFilterMiddleware': 1,
         },
     }
 
     def parse_pages(self, response):
         sel_video_list = response.xpath('//div[@class="v va"]')
         for sel in sel_video_list:
-            item = YouKuJiKeItem()
+            item = AudioVideoGetItem()
             item['host'] = 'youku_jike'
             item['media_type'] = 'video'
             item['stack'] = []
             item['download'] = 0
-            # item['file_dir'] = r'/data/worker/spider/youku_jike'
             item['file_dir'] = os.path.join(settings['FILES_STORE'], self.name)
-            # item['file_dir'] = r'D:\python\scrapy\audio_video_get\Video\youku_jike'
             item['url'] = 'http:' + sel.xpath('div[@class="v-link"]/a/@href').extract()[0]
             item['file_name'] = get_md5(item['url'])
 

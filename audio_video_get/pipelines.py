@@ -9,13 +9,11 @@ import copy
 import logging
 
 import scrapy
-# import requests
 from scrapy.pipelines.files import FilesPipeline
 from scrapy.exceptions import DropItem
 from pymongo import MongoClient
 from scrapy.conf import settings
 
-from items import TouTiaoItem
 from items import AudioVideoGetItem
 
 
@@ -41,8 +39,8 @@ class AudioVideoGetPipeline(object):
                 'stack': item['stack'],
                 'media_urls': item['media_urls'],
             }
-            self.col.update({'url': item['url']}, data, upsert=True)
-            # self.col.insert(data)
+            # self.col.update({'url': item['url']}, data, upsert=True)
+            self.col.insert(data)
         except Exception, err:
             logging.error(str(err))
             raise DropItem(str(err))
@@ -85,104 +83,14 @@ class IQiYiPipeline(object):
                 'stack': self.items['stack'],
                 'media_urls': self.items['media_urls'],
             }
-            self.col.update({'url': self.items['url']}, data, upsert=True)
+            # self.col.update({'url': self.items['url']}, data, upsert=True)
+            self.col.insert(data)
             return self.items
-            # self.col.insert(data)
         except Exception, err:
             logging.error(str(err))
             raise DropItem(str(err))
         finally:
             self.items = copy.deepcopy(item)
-
-
-class ToutiaoPipeline(object):
-    def __init__(self):
-        self.client = MongoClient(settings['MONGODB_SERVER'], settings['MONGODB_PORT'])
-        self.db = self.client.get_database(settings['MONGODB_DB'])
-        if 'MONGODB_USER' in settings.keys():
-            self.db.authenticate(settings['MONGODB_USER'], settings['MONGODB_PASSWORD'])
-        self.col = self.db.get_collection(settings['MONGODB_COLLECTION'])
-        self.col.ensure_index('url', unique=True)
-
-    def process_item(self, item, spider):
-        try:
-            data = {
-                'url': item['url'],
-                'file_name': item['file_name'],
-                'media_type': item['media_type'],
-                'host': item['host'],
-                'file_dir': item['file_dir'],
-                'download': item['download'],
-                'info': item['info'],
-                'stack': item['stack'],
-                'media_urls': item['media_urls'],
-            }
-            self.col.update({'url': item['url']}, data, upsert=True)
-            # self.col.insert(data)
-        except Exception, err:
-            logging.error(str(err))
-            raise DropItem(str(err))
-        return item
-
-
-class YouKuJiKePipeline(object):
-    def __init__(self):
-        self.client = MongoClient(settings['MONGODB_SERVER'], settings['MONGODB_PORT'])
-        self.db = self.client.get_database(settings['MONGODB_DB'])
-        if 'MONGODB_USER' in settings.keys():
-            self.db.authenticate(settings['MONGODB_USER'], settings['MONGODB_PASSWORD'])
-        self.col = self.db.get_collection(settings['MONGODB_COLLECTION'])
-        self.col.ensure_index('url', unique=True)
-
-    def process_item(self, item, spider):
-        try:
-            data = {
-                'url': item['url'],
-                'file_name': item['file_name'],
-                'media_type': item['media_type'],
-                'host': item['host'],
-                'file_dir': item['file_dir'],
-                'download': item['download'],
-                'info': item['info'],
-                'stack': item['stack'],
-                'media_urls': item['media_urls'],
-            }
-            self.col.update({'url': item['url']}, data, upsert=True)
-            # self.col.insert(data)
-        except Exception, err:
-            logging.error(str(err))
-            raise DropItem(str(err))
-        return item
-
-
-class WeiXinErGengPipeline(object):
-    def __init__(self):
-        self.client = MongoClient(settings['MONGODB_SERVER'], settings['MONGODB_PORT'])
-        self.db = self.client.get_database(settings['MONGODB_DB'])
-        if 'MONGODB_USER' in settings.keys():
-            self.db.authenticate(settings['MONGODB_USER'], settings['MONGODB_PASSWORD'])
-        self.col = self.db.get_collection(settings['MONGODB_COLLECTION'])
-        self.col.ensure_index('url', unique=True)
-
-    def process_item(self, item, spider):
-        try:
-            data = {
-                'url': item['url'],
-                'file_name': item['file_name'],
-                'media_type': item['media_type'],
-                'host': item['host'],
-                'file_dir': item['file_dir'],
-                'download': item['download'],
-                'info': item['info'],
-                'stack': item['stack'],
-                'media_urls': item['media_urls'],
-            }
-            self.col.update({'url': item['url']}, data, upsert=True)
-            # self.col.insert(data)
-        except Exception, err:
-            logging.error(str(err))
-            raise DropItem(str(err))
-        return item
 
 
 class YouKuJiKeFilePipeline(FilesPipeline):
@@ -193,7 +101,7 @@ class YouKuJiKeFilePipeline(FilesPipeline):
         if 'MONGODB_USER' in settings.keys():
             self.db.authenticate(settings['MONGODB_USER'], settings['MONGODB_PASSWORD'])
         self.col = self.db.get_collection(settings['MONGODB_COLLECTION'])
-        self.item = TouTiaoItem()
+        self.item = AudioVideoGetItem()
 
     @staticmethod
     def _handle_redirect(file_url):
@@ -221,34 +129,4 @@ class YouKuJiKeFilePipeline(FilesPipeline):
                             'download': 1,
                             'file_name': item['file_name'],
                         }})
-        return item
-
-
-class ErGengPipeline(object):
-    def __init__(self):
-        self.client = MongoClient(settings['MONGODB_SERVER'], settings['MONGODB_PORT'])
-        self.db = self.client.get_database(settings['MONGODB_DB'])
-        if 'MONGODB_USER' in settings.keys():
-            self.db.authenticate(settings['MONGODB_USER'], settings['MONGODB_PASSWORD'])
-        self.col = self.db.get_collection(settings['MONGODB_COLLECTION'])
-        self.col.ensure_index('url', unique=True)
-
-    def process_item(self, item, spider):
-        try:
-            data = {
-                'url': item['url'],
-                'file_name': item['file_name'],
-                'media_type': item['media_type'],
-                'host': item['host'],
-                'file_dir': item['file_dir'],
-                'download': item['download'],
-                'info': item['info'],
-                'stack': item['stack'],
-                'media_urls': item['media_urls'],
-            }
-            self.col.update({'url': item['url']}, data, upsert=True)
-            # self.col.insert(data)
-        except Exception, err:
-            logging.error(str(err))
-            raise DropItem(str(err))
         return item

@@ -1,120 +1,15 @@
-import re
 import os
 import time
 import math
-import json
 import random
 from ctypes import c_int, c_uint
-from urlparse import urljoin, urlparse
-
-import scrapy
-from scrapy.conf import settings
-from scrapy.spiders import CrawlSpider, Rule
-from scrapy.linkextractors import LinkExtractor
-
-from audio_video_get.items import AudioVideoGetItem
-from audio_video_get.common.common import get_md5
-
-seed = "#$#@#*ad"
+from urlparse import urljoin
 
 
-class WeiXinErGengSpider(CrawlSpider):
-    name = "weixin_ergeng"
-    download_delay = 10
-    # allowed_domains = ['chuansong.me', 'video.qq.com']
-    start_urls = ['http://chuansong.me/account/zjhtcmgs111']
-    rules = (
-        Rule(LinkExtractor(
-            allow=('/account/zjhtcmgs111\?start=\d+', 'vhot2.qqvideo.tc.qq.com', 'video.qq.com', )),
-            callback='parse_pages',
-            follow=True,
-        ),
-    )
+class VQQCom(object):
+    seed = "#$#@#*ad"
 
-    custom_settings = {
-        'ITEM_PIPELINES': {
-            'audio_video_get.pipelines.AudioVideoGetPipeline': 100,
-        },
-        'DOWNLOADER_MIDDLEWARES': {
-            'audio_video_get.middlewares.WeiXinErGengUserAgentMiddleware': 400,
-            'audio_video_get.middlewares.AudioVideoGetDupFilterMiddleware': 1,
-        },
-    }
-
-    def parse_pages(self, response):
-        sel_list = response.xpath('//div[@class="feed_item_question"]')
-        for sel in sel_list:
-            item = AudioVideoGetItem()
-            item['host'] = 'weixin_ergeng'
-            item['stack'] = []
-            item['download'] = 0
-            item['file_dir'] = os.path.join(settings['FILES_STORE'], self.name)
-            item['info'] = {
-                'title': sel.xpath('.//a[@class="question_link"]/text()').extract()[0].strip(),
-                'link': sel.xpath('.//a[@class="question_link"]/@href').extract()[0],
-                'date': sel.xpath('.//span[@class="timestamp"]/text()').extract()[0].strip(),
-                'author': 'zjhtcmgs111',
-            }
-            url = urljoin('http://chuansong.me', sel.xpath('.//a[@class="question_link"]/@href').extract()[0])
-            item['url'] = url
-            item['file_name'] = get_md5(item['url'])
-            yield scrapy.Request(url=url, meta={'item': item}, callback=self.parse_info)
-
-    def parse_info(self, response):
-        item = response.meta['item']
-        url = 'http://h5vv.video.qq.com/getinfo'
-        item['media_type'], result = self.__video_or_audio(response.body)
-        self.logger.info('type: {}, result: {} url: {}'.format(item['media_type'], result, response.url))
-        if item['media_type'] == 'video':
-            guid, params = self._get_info(result)
-            meta = {
-                'guid': guid,
-                'item': item,
-            }
-            yield scrapy.FormRequest(url, method='GET', meta=meta, formdata=params, callback=self.parse_video_url)
-        elif item['media_type'] == 'audio':
-            item['media_urls'] = [result]
-            t = urlparse(result).path.split('.')
-            item['file_name'] += ('.' + t[1]) if ((len(t) >= 2) and t[1]) else '.mp3'
-            yield item
-
-    @staticmethod
-    def __video_or_audio(text):
-        result = re.findall(r'vid=(.*?)[&|"]', text)
-        if result:
-            return 'video', result[0]
-
-        result = re.findall(r'audiourl="(.*?)"', text)
-        if result:
-            return 'audio', result[0]
-
-        return '', None
-
-    def parse_video_url(self, response):
-        item = response.meta['item']
-        guid = response.meta['guid']
-        try:
-            json_data = json.loads(response.body[response.body.find('(') + 1: -1])
-        except Exception as err:
-            self.logger.error('url: {}, error: {}'.format(item['url'], str(err)))
-            return
-        else:
-            if json_data['exem'] != 0:
-                self.logger.warning('url: {}, exem: {}'.format(item['url'], json_data['exem']))
-                if 'msg' in json_data:
-                    self.logger.warning('url: {}, msg: {}'.format(item['url'], json_data['msg']))
-                return
-
-        url, ext = self._get_video_info(guid, json_data)
-        if url is None:
-            self.logger.error('url: {}, error: {}'.format(item['url'], ext))
-            return
-        item['media_urls'] = [url]
-        # item['file_urls'] = [url]
-        item['file_name'] += ext
-        return item
-
-    def _get_info(self, vid):
+    def get_info(self, vid):
         g = '11001'  # from platform in d
         h = vid  # from vids in d
         i = 'v5010'
@@ -144,7 +39,7 @@ class WeiXinErGengSpider(CrawlSpider):
         return guid, params
 
     @staticmethod
-    def _get_video_info(guid, json_data):
+    def get_video_info(guid, json_data):
         try:
             url = urljoin(json_data['vl']['vi'][0]['ul']['ui'][0]['url'], json_data['vl']['vi'][0]['fn'])
             params = {
@@ -248,8 +143,8 @@ class WeiXinErGengSpider(CrawlSpider):
         g = h = ''
         f = f if f is not None else str(int(time.time()))
 
-        j = self._func_hex_to_string(self._func_ha(''.join([a, b, f, seed, g, h, str(d), c])))
-        k = self._func_url_enc(self._func_temp_calc(j, seed), str(d), f)
+        j = self._func_hex_to_string(self._func_ha(''.join([a, b, f, self.seed, g, h, str(d), c])))
+        k = self._func_url_enc(self._func_temp_calc(j, self.seed), str(d), f)
         l = self._func_url_enc(self._func_temp_calc(j, "86FG@hdf"), str(d), f)
         m = self._func_u1(k, 0)
         n = self._func_u1(k, 1)

@@ -8,7 +8,7 @@ import base64
 from scrapy.exceptions import CloseSpider
 
 from base_player import BasePlayer
-from audio_video_get.common import get_md5
+from audio_video_get.common.common import get_md5
 
 
 class LetvPlayer(BasePlayer):
@@ -52,12 +52,12 @@ class LetvPlayer(BasePlayer):
             self.logger.error('url: {}, error: {}'.format(self.page_url, str(err)))
             return False
         else:
+            # if code == 10071:
+            #     self.logger.error('Anti-Spider: close spider by self, error code: {}'.format(code))
+            #     raise CloseSpider('Anti-Spider')
             if code != 0:
                 self.logger.error('url: {}, code: {}'.format(self.page_url, str(code)))
                 return False
-            elif code == 10071:
-                self.logger.error('Anti-Spider: close spider by self, error code: {}'.format(code))
-                raise CloseSpider('Anti-Spider')
         return True
 
     def __get_params(self):

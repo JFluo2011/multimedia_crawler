@@ -10,7 +10,7 @@ from scrapy.spiders import CrawlSpider, Rule
 from scrapy.linkextractors import LinkExtractor
 
 from audio_video_get.items import AudioVideoGetItem
-from audio_video_get.common import get_md5
+from audio_video_get.common.common import get_md5
 
 
 class YouKuJiKeSpider(CrawlSpider):

@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 import re
 import os
+import time
 
 import scrapy
 from scrapy.conf import settings
@@ -47,15 +48,17 @@ class ErGengSpider(CrawlSpider):
         item['download'] = 0
         item['file_dir'] = os.path.join(settings['FILES_STORE'], self.name)
         item['url'] = response.url
+        item['info'] = {}
+        item['info']['title'] = response.xpath(r'//div[contains(@class, "new-video-info")]/h3/text()').extract()[0].strip()
+        item['info']['link'] = item['url']
+        item['info']['intro'] = response.xpath(r'//div[contains(@class, "tj")]/text()').extract()[0].strip()
         try:
-            item['info'] = {
-                'title': response.xpath(r'//div[contains(@class, "new-video-info")]/h3/text()').extract()[0].strip(),
-                'link': item['url'],
-                'album': response.xpath(r'//div[contains(@class, "tj")]/text()').extract()[0].strip(),
-            }
-        except Exception as err:
-            self.logger.error('url: {}, error: {}'.format(item['url'], str(err)))
-            return
+            item['info']['date'] = time.strftime('%Y-%m-%d',
+                                                 time.localtime(float(re.findall(r'"create_at"\s*:\s*(\d+),',
+                                                                                 response.body)[0])))
+            item['info']['author'] = re.findall(r'"user_nickname"\s*:\s*"(.*?)"', response.body)[0]
+        except:
+            pass
 
         player = self.__get_player(item['url'], response)
         if player is None:
@@ -65,12 +68,16 @@ class ErGengSpider(CrawlSpider):
                                  formdata=player.params, callback=player.parse_video)
 
     def __get_player(self, page_url, response):
-        is_thirdparty = re.findall(r'"is_thirdparty"\s*:\s*(\d+)', response.body)[0]
+        try:
+            is_thirdparty = re.findall(r'"is_thirdparty"\s*:\s*(\d+)', response.body)[0]
+        except IndexError:
+            is_thirdparty = -1
+
         if re.findall(r'letv.com', response.body):
             player = self.__get_letv_player(page_url, response)
-        elif re.findall(r'v.qq.com', response.body) and (is_thirdparty == '1'):
+        elif re.findall(r'v.qq.com', response.body):
             player = self.__get_qq_player(page_url, response)
-        elif re.findall(r'player.youku.com', response.body) and (is_thirdparty == '1'):
+        elif re.findall(r'player.youku.com', response.body):
             player = self.__get_youku_player(page_url, response)
         elif is_thirdparty == '0':
             player = self.__get_ergeng_player(page_url, response)

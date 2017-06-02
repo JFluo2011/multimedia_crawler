@@ -6,8 +6,8 @@ from scrapy.conf import settings
 from scrapy.spiders import CrawlSpider, Rule
 from scrapy.linkextractors import LinkExtractor
 
-from ..items import AudioVideoGetItem
-from ..common import get_md5
+from audio_video_get.items import AudioVideoGetItem
+from audio_video_get.common.common import get_md5
 
 
 class FeiDieShuoSpider(CrawlSpider):

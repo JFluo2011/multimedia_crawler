@@ -39,8 +39,8 @@ class AudioVideoGetPipeline(object):
                 'stack': item['stack'],
                 'media_urls': item['media_urls'],
             }
-            # self.col.update({'url': item['url']}, data, upsert=True)
-            self.col.insert(data)
+            self.col.update({'url': item['url']}, data, upsert=True)
+            # self.col.insert(data)
         except Exception, err:
             logging.error(str(err))
             raise DropItem(str(err))
@@ -83,8 +83,8 @@ class IQiYiPipeline(object):
                 'stack': self.items['stack'],
                 'media_urls': self.items['media_urls'],
             }
-            # self.col.update({'url': self.items['url']}, data, upsert=True)
-            self.col.insert(data)
+            self.col.update({'url': self.items['url']}, data, upsert=True)
+            # self.col.insert(data)
             return self.items
         except Exception, err:
             logging.error(str(err))

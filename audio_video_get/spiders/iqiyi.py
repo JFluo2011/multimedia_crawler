@@ -10,7 +10,7 @@ import scrapy
 from scrapy.conf import settings
 
 from audio_video_get.items import AudioVideoGetItem
-from audio_video_get.common import get_md5
+from audio_video_get.common.common import get_md5
 
 
 class IQiYiSpider(scrapy.Spider):

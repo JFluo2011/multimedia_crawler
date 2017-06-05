@@ -10,14 +10,14 @@ import scrapy
 from scrapy.conf import settings
 
 from audio_video_get.items import AudioVideoGetItem
-from audio_video_get.common.common import get_md5
+from audio_video_get.common.common import get_md5, base_n
 
 
 class IQiYiSpider(scrapy.Spider):
     name = "iqiyi"
-    download_delay = 10
-    # users = ['1190686219', '1233288265']
-    users = ['1233288265']
+    download_delay = 5
+    users = ['1190686219', '1233288265']
+    # users = ['1233288265']
     # allowed_domains = ["youku.com"]
     base_url = 'http://www.iqiyi.com/u/{}/v'
 
@@ -82,10 +82,11 @@ class IQiYiSpider(scrapy.Spider):
                str(tm) + '&k_tag=1&k_uid=' + self.__get_macid() + '&rs=1')
         vf = self.__get_vf(src)
         url = host + src + '&vf=' + vf
-        yield scrapy.Request(url, method='GET', meta={'item': item}, callback=self.parse_video_urls)
+        yield scrapy.Request(url, method='GET', meta={'item': item, 'tvid': tvid}, callback=self.parse_video_urls)
 
     def parse_video_urls(self, response):
         item = response.meta['item']
+        tvid = response.meta['tvid']
         try:
             json_data = json.loads(response.body)
         except Exception as err:
@@ -103,7 +104,28 @@ class IQiYiSpider(scrapy.Spider):
             self.logger.error('url: {}, error: {}'.format(item['url'], str(err)))
             return
 
+        meta = {
+            'item': item,
+            'url_prefix': url_prefix,
+            'lst': lst,
+        }
         item['file_name'] += '.' + lst[0]['l'].split('?')[0].split('.')[-1]
+        base_url = 'http://mixer.video.iqiyi.com/jp/mixin/videos/{}?callback=window.Q.__callbacks__.{}&status=1'
+        temp = base_n(int(2147483648 * random.random()), 36)
+        url = base_url.format(tvid, temp)
+        yield scrapy.Request(url, method='GET', meta=meta, callback=self.parse_play_count)
+
+    def parse_play_count(self, response):
+        item = response.meta['item']
+        lst = response.meta['lst']
+        url_prefix = response.meta['url_prefix']
+        try:
+            json_data = json.loads(response.body[response.body.find('(') + 1: response.body.find(')')])
+            item['info']['play_count'] = json_data['data']['playCount']
+            item['info']['comments_count'] = json_data['data']['commentCount']
+        except Exception as err:
+            self.logger.error('url: {}, error: {}'.format(item['url'], str(err)))
+            return
         for l in lst:
             url = url_prefix + l['l']
             yield scrapy.Request(url, method='GET', meta={'item': item}, callback=self.parse_download_url)

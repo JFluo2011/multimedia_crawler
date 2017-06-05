@@ -95,6 +95,16 @@ class RotateUserAgentMiddleware(UserAgentMiddleware):
     # for more user agent strings,you can find it in http://www.useragentstring.com/pages/useragentstring.php
 
 
+class QingTingFMAppUserAgentMiddleware(UserAgentMiddleware):
+    def __init__(self, user_agent=''):
+        super(QingTingFMAppUserAgentMiddleware, self).__init__()
+        self.user_agent = user_agent
+
+    def process_request(self, request, spider):
+        ua = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10.8; rv:22.0) QingTingFM-Android'
+        request.headers.setdefault('User-Agent', ua)
+
+
 class MobileUserAgentMiddleware(UserAgentMiddleware):
     def __init__(self, user_agent=''):
         super(MobileUserAgentMiddleware, self).__init__()

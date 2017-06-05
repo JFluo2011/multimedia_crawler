@@ -18,9 +18,9 @@ from audio_video_get.items import AudioVideoGetItem
 class ToutiaoSpider(scrapy.Spider):
     name = "toutiao"
     download_delay = 5
-    # user_ids = ['6975800262', '50590890693', '5857206714', '6264649967', '6373263682',
-    #             '6905052877', '6887101617', '6886776520']
-    user_ids = ['6264649967', '6373263682', '6905052877', '6887101617', '6886776520']
+    user_ids = ['6975800262', '50590890693', '5857206714', '6264649967', '6373263682',
+                '6905052877', '6887101617', '6886776520', '6976474883']
+    # user_ids = ['6264649967', '6373263682', '6905052877', '6887101617', '6886776520']
     base_url = 'http://www.toutiao.com/c/user/article/'
     custom_settings = {
         'ITEM_PIPELINES': {
@@ -57,11 +57,13 @@ class ToutiaoSpider(scrapy.Spider):
                 item['file_name'] = get_md5(item['url'])
                 item['media_urls'] = [item['url']]
                 item['info'] = {
-                    'title': data['title'],
-                    'intro': data['abstract'],
+                    'title': data.get('title', ''),
+                    'intro': data.get('abstract', ''),
                     'album': '',
                     'author_id': user_id,
-                    'author': data['source'],
+                    'author': data.get('source', ''),
+                    'play_count': data.get('detail_play_effective_count', 0),
+                    'comments_count': data.get('comments_count', 0),
                 }
                 if 'toutiao' in item['url']:
                     yield scrapy.Request(url=item['url'], meta={'item': item}, callback=self.parse_video_id)

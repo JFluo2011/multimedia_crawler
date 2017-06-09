@@ -48,7 +48,6 @@ class ToutiaoSpider(scrapy.Spider):
                 item['download'] = 0
                 item['host'] = 'toutiao'
                 item['media_type'] = 'video'
-                # item['file_dir'] = '/data/worker/spider/toutiao'
                 item['file_dir'] = os.path.join(settings['FILES_STORE'], self.name)
                 if 'item_id' in data:
                     item['url'] = 'http://www.toutiao.com/i' + data['item_id'] + '/'
@@ -59,8 +58,6 @@ class ToutiaoSpider(scrapy.Spider):
                 item['info'] = {
                     'title': data.get('title', ''),
                     'intro': data.get('abstract', ''),
-                    'album': '',
-                    'author_id': user_id,
                     'author': data.get('source', ''),
                     'play_count': data.get('detail_play_effective_count', 0),
                     'comments_count': data.get('comments_count', 0),

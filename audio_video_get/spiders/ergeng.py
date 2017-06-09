@@ -48,14 +48,17 @@ class ErGengSpider(CrawlSpider):
         item['download'] = 0
         item['file_dir'] = os.path.join(settings['FILES_STORE'], self.name)
         item['url'] = response.url
-        item['info'] = {}
+        item['info'] = {'link', item['url']}
         item['info']['title'] = response.xpath(r'//div[contains(@class, "new-video-info")]/h3/text()').extract()[0].strip()
-        item['info']['link'] = item['url']
         item['info']['intro'] = response.xpath(r'//div[contains(@class, "tj")]/text()').extract()[0].strip()
         try:
             item['info']['date'] = time.strftime('%Y-%m-%d',
                                                  time.localtime(float(re.findall(r'"create_at"\s*:\s*(\d+),',
                                                                                  response.body)[0])))
+        except:
+            pass
+
+        try:
             item['info']['author'] = re.findall(r'"user_nickname"\s*:\s*"(.*?)"', response.body)[0]
         except:
             pass

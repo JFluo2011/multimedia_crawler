@@ -65,32 +65,31 @@ class IQiYiPipeline(object):
         elif item['url'] == self.items['url']:
             self.items['media_urls'].extend(item['media_urls'])
         else:
-            self.__insert_item(item=item)
+            return self.__insert_item(item=item)
 
     def close_spider(self, spider):
-        self.__insert_item()
+        return self.__insert_item()
 
     def __insert_item(self, item=None):
+        item, self.items = self.items, item
         try:
             data = {
-                'url': self.items['url'],
-                'file_name': self.items['file_name'],
-                'media_type': self.items['media_type'],
-                'host': self.items['host'],
-                'file_dir': self.items['file_dir'],
-                'download': self.items['download'],
-                'info': self.items['info'],
-                'stack': self.items['stack'],
-                'media_urls': self.items['media_urls'],
+                'url': item['url'],
+                'file_name': item['file_name'],
+                'media_type': item['media_type'],
+                'host': item['host'],
+                'file_dir': item['file_dir'],
+                'download': item['download'],
+                'info': item['info'],
+                'stack': item['stack'],
+                'media_urls': item['media_urls'],
             }
-            self.col.update({'url': self.items['url']}, data, upsert=True)
+            self.col.update({'url': item['url']}, data, upsert=True)
             # self.col.insert(data)
-            return self.items
         except Exception, err:
             logging.error(str(err))
             raise DropItem(str(err))
-        finally:
-            self.items = copy.deepcopy(item)
+        return item
 
 
 class YouKuJiKeFilePipeline(FilesPipeline):

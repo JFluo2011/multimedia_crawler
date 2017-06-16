@@ -115,7 +115,7 @@ class WeiXinErGengSpider(CrawlSpider):
         item = response.meta['item']
         guid = response.meta['guid']
         try:
-            json_data = json.loads(response.body[response.body.find('(') + 1: -1])
+            json_data = json.loads(response.body[response.body.find('{'): response.body.rfind('}') + 1])
         except Exception as err:
             self.logger.error('url: {}, error: {}'.format(item['url'], str(err)))
             return

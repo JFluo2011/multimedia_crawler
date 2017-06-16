@@ -75,7 +75,7 @@ class QQVideoSpider(scrapy.Spider):
 
     def parse_page(self, response):
         user = response.meta['user']
-        json_data = json.loads(response.body[response.body.find('(') + 1: response.body.find(')')])
+        json_data = json.loads(response.body[response.body.find('{'): response.body.rfind('}')+1])
         for data in json_data['videolst']:
             item = AudioVideoGetItem()
             item['host'] = 'qq_video'
@@ -110,7 +110,7 @@ class QQVideoSpider(scrapy.Spider):
         item = response.meta['item']
         guid = response.meta['guid']
         try:
-            json_data = json.loads(response.body[response.body.find('(') + 1: -1])
+            json_data = json.loads(response.body[response.body.find('{'): response.body.rfind('}')+1])
         except Exception as err:
             self.logger.error('url: {}, error: {}'.format(item['url'], str(err)))
             return

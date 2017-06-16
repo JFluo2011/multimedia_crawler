@@ -46,7 +46,7 @@ class LetvPlayer(BasePlayer):
 
     def get_json(self, response):
         try:
-            self.json_data = json.loads(response.body[response.body.find('(') + 1: -1])
+            self.json_data = json.loads(response.body[response.body.find('{'): response.body.rfind('}') + 1])
             code = self.json_data['code']
         except Exception as err:
             self.logger.error('url: {}, error: {}'.format(self.page_url, str(err)))

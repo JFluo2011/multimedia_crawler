@@ -36,7 +36,7 @@ class YouKuPlayer(BasePlayer):
 
     def parse_video_custom(self, response):
         item = response.meta['item']
-        json_data = json.loads(response.body[response.body.find('(') + 1: response.body.rfind(')')])
+        json_data = json.loads(response.body[response.body.find('{'): response.body.rfind('}') + 1])
         vid = self.url.split('/')[-1]
         url = 'https://ups.youku.com/ups/get.json'
         params = {
@@ -54,7 +54,7 @@ class YouKuPlayer(BasePlayer):
     def parse_video_urls(self, response):
         item = response.meta['item']
         try:
-            json_data = json.loads(response.body[response.body.find('(') + 1: response.body.rfind(')')])
+            json_data = json.loads(response.body[response.body.find('{'): response.body.rfind('}') + 1])
             code = json_data['e']['code']
         except Exception as err:
             self.logger.error('url: {}, error: {}'.format(self.page_url, str(err)))

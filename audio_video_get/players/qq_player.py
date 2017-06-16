@@ -42,7 +42,7 @@ class QQPlayer(BasePlayer):
 
     def __get_json(self, response):
         try:
-            self.json_data = json.loads(response.body[response.body.find('(') + 1: -1])
+            self.json_data = json.loads(response.body[response.body.find('{'): response.body.rfind('}') + 1])
         except Exception as err:
             self.logger.error('url: {}, error: {}'.format(self.page_url, str(err)))
             return False

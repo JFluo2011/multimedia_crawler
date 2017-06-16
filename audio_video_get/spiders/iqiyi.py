@@ -74,35 +74,13 @@ class IQiYiSpider(scrapy.Spider):
             }
             yield scrapy.FormRequest(url=response.url.split('?')[0], method='GET', formdata=params)
 
-    # def parse(self, response):
-    #     item = AudioVideoGetItem()
-    #     item['stack'] = []
-    #     item['download'] = 0
-    #     item['host'] = 'iqiyi'
-    #     item['media_type'] = 'video'
-    #     item['file_dir'] = os.path.join(settings['FILES_STORE'], self.name)
-    #     item['url'] = response.url
-    #     item['file_name'] = get_md5(item['url'])
-    #     item['info'] = {'intro': '', 'date': '', }
-    #     tvid = re.findall(r'param\[\'tvid\'\]\s+=\s+"(\d+)"', response.body)[0]
-    #     vid = re.findall(r'param\[\'vid\'\]\s+=\s+"(.*?)"', response.body)[0]
-    #     tm = time.time()
-    #     tm = int(tm) * 1000
-    #     host = 'http://cache.video.qiyi.com'
-    #     src = ('/vps?tvid=' + tvid + '&vid=' + vid + '&v=0&qypid=' + tvid + '_12&src=01012001010000000000&t=' +
-    #            str(tm) + '&k_tag=1&k_uid=' + self.__get_macid() + '&rs=1')
-    #     vf = self.__get_vf(src)
-    #     url = host + src + '&vf=' + vf
-    #     yield scrapy.Request(url, method='GET', meta={'item': item, 'tvid': tvid}, callback=self.parse_video_urls)
-
     def parse_params(self, response):
         item = response.meta['item']
         tvid = re.search(r'param\[\'tvid\'\]\s+=\s+"(\d+)"|$', response.body).group(1)
         vid = re.search(r'param\[\'vid\'\]\s+=\s+"(.*?)"|$', response.body).group(1)
         if not all([tvid, vid]):
             return
-        # tm = time.time()
-        # tm = int(tm) * 1000
+
         tm = int(time.time()*1000)
         host = 'http://cache.video.qiyi.com'
         src = ('/vps?tvid=' + tvid + '&vid=' + vid + '&v=0&qypid=' + tvid + '_12&src=01012001010000000000&t=' +
@@ -147,7 +125,7 @@ class IQiYiSpider(scrapy.Spider):
         lst = response.meta['lst']
         url_prefix = response.meta['url_prefix']
         try:
-            json_data = json.loads(response.body[response.body.find('(') + 1: response.body.find(')')])
+            json_data = json.loads(response.body[response.body.find('{'): response.body.rfind('}') + 1])
             item['info']['play_count'] = json_data['data']['playCount']
             item['info']['comments_count'] = json_data['data']['commentCount']
         except Exception as err:

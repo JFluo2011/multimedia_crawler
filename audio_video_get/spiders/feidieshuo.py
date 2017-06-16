@@ -12,7 +12,7 @@ from audio_video_get.common.common import get_md5
 
 class FeiDieShuoSpider(CrawlSpider):
     name = "feidieshuo"
-    download_delay = 10
+    download_delay = 5
     allowed_domains = ["www.feidieshuo.com"]
     start_urls = ['http://www.feidieshuo.com/']
 
@@ -42,22 +42,23 @@ class FeiDieShuoSpider(CrawlSpider):
         item['host'] = 'feidieshuo'
         item['media_type'] = 'video'
         item['stack'] = []
-        item['download'] = 0
-        item['file_dir'] = os.path.join(settings['FILES_STORE'], self.name)
+        item['download'] = 1
+        item['file_dir'] = os.path.join(settings['FILES_STORE'], item['media_type'], self.name)
         item['url'] = response.url
         item['file_name'] = get_md5(item['url'])
 
-        try:
-            item['info'] = {
-                'title': response.xpath('//div[@class="t-word-text"]/h3/text()').extract()[0].strip(),
-                'link': item['url'],
-                'date': response.xpath('//div[@class="time"]/strong/text()').extract()[0],
-                'author': 'feidieshuo',
-                # 'album': response.xpath('//div[@class="word-content"]/p/text()').extract()[0].strip(),
-            }
-        except Exception as err:
-            self.logger.warning('page: {}, url: {}, error: {}'.format(response.url, item['url'], str(err)))
-        item['media_urls'] = [''.join(re.findall(r'videourl:\s*(.*?),',
-                                                 response.body)[0].split('+')).replace('"', '')]
+        item['info'] = {
+            'title': response.xpath('//div[@class="t-word-text"]/h3/text()')
+                .extract_first(default='').strip(),
+            'link': item['url'],
+            'date': response.xpath('//div[@class="time"]/strong/text()').extract_first(default=''),
+            'author': 'feidieshuo',
+            'play_count': response.xpath('//div[@class="user"]/div[1]/span[1]/text()').extract_first(default=''),
+            'comments_count': response.xpath('//div[@class="user"]/div[1]/span[2]/text()').extract_first(default=''),
+            'intro': response.xpath('//div[@class="word-content"]/p/text()').extract_first(default='').strip(),
+        }
+        item['media_urls'] = [''.join(re.findall(r'videourl:\s*(.*?),', response.body)[0]
+                                      .split('+')).replace('"', '')]
         item['file_name'] += '.' + item['media_urls'][0].split('.')[-1]
         return item
+

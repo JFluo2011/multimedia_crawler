@@ -5,9 +5,12 @@
 # See documentation in:
 # http://doc.scrapy.org/en/latest/topics/spider-middleware.html
 
+import copy
 import random
+import bisect
 import logging
 
+import scrapy
 from scrapy import signals
 from scrapy.downloadermiddlewares.useragent import UserAgentMiddleware
 from pymongo import MongoClient
@@ -28,12 +31,66 @@ class AudioVideoGetDupFilterMiddleware(object):
             {'host': spider.name},
             {'url': request.url},
             # {'download': {'$in': [0, 1, 2]}}
-            {'download': {'$ne': -1}}
+            {'download': {'$ne': -1}},
         ]}):
             logging.warning('the page is crawled, url is {0}'.format(request.url))
             raise IgnoreRequest()
 
         return None
+
+
+class YouKuJiKeDupFilterMiddleware(object):
+    def __init__(self):
+        self.client = MongoClient(settings['MONGODB_SERVER'], settings['MONGODB_PORT'])
+        self.db = self.client.get_database(settings['MONGODB_DB'])
+        if 'MONGODB_USER' in settings.keys():
+            self.db.authenticate(settings['MONGODB_USER'], settings['MONGODB_PASSWORD'])
+        self.col = self.db.get_collection(settings['MONGODB_COLLECTION'])
+
+    def process_request(self, request, spider):
+        if 'http://v.youku.com/v_show/' in request.url:
+            url = request.url.split('?')[0]
+        else:
+            url = request.url
+        if self.col.find_one({'$and': [
+            {'host': spider.name},
+            {'url': url},
+            # {'download': {'$in': [0, 1, 2]}}
+            {'download': {'$ne': -1}},
+        ]}):
+            logging.warning('the page is crawled, url is {0}'.format(url))
+            raise IgnoreRequest()
+
+        return None
+
+
+class IQiYiSpiderMiddleware(object):
+    items = {}
+
+    def process_spider_output(self, response, result, spider):
+        for i in result:
+            if isinstance(i, scrapy.Item):
+                key = i['url']
+                if key not in self.items.keys():
+                    self.items[key] = copy.deepcopy(i)
+                else:
+                    self.__merge_items(key, i)
+                if i['info']['count'] == len(self.items[key]['media_urls']):
+                    item = self.items.pop(key)
+                    item['info'].pop('index', None)
+                    item['info'].pop('count', None)
+                    yield item
+            else:
+                yield i
+
+    def __merge_items(self, key, item):
+        index = self.__insort(key, item['info']['index'][0])
+        self.items[key]['media_urls'].insert(index, item['media_urls'][0])
+
+    def __insort(self, key, elem):
+        index = bisect.bisect(self.items[key]['info']['index'], elem)
+        bisect.insort(self.items[key]['info']['index'], elem)
+        return index
 
 
 class AudioVideoGetSpiderMiddleware(object):
@@ -44,22 +101,21 @@ class AudioVideoGetSpiderMiddleware(object):
         crawler.signals.connect(s.spider_opened, signal=signals.spider_opened)
         return s
 
-    def process_spider_input(response, spider):
+    def process_spider_input(self, response, spider):
         # Called for each response that goes through the spider
         # middleware and into the spider.
 
         # Should return None or raise an exception.
         return None
 
-    def process_spider_output(response, result, spider):
+    def process_spider_output(self, response, result, spider):
         # Called with the results returned from the Spider, after
         # it has processed the response.
-
         # Must return an iterable of Request, dict or Item objects.
         for i in result:
             yield i
 
-    def process_spider_exception(response, exception, spider):
+    def process_spider_exception(self, response, exception, spider):
         # Called when a spider or process_spider_input() method
         # (from other spider middleware) raises an exception.
 
@@ -67,7 +123,7 @@ class AudioVideoGetSpiderMiddleware(object):
         # or Item objects.
         pass
 
-    def process_start_requests(start_requests, spider):
+    def process_start_requests(self, start_requests, spider):
         # Called with the start requests of the spider, and works
         # similarly to the process_spider_output() method, except
         # that it doesn’t have a response associated.
@@ -122,7 +178,7 @@ class WeiXinErGengUserAgentMiddleware(UserAgentMiddleware):
         self.user_agent = user_agent
 
     def process_request(self, request, spider):
-        if request.url.startswith('http://chuansong.me'):
+        if request.url.startswith('http://chuansong.me') or request.url.startswith('https://v.qq.com/x/page/'):
             ua = random.choice(settings['USER_AGENTS'])
         else:
             ua = ('Mozilla/5.0 (Linux; Android 6.0; Nexus 5 Build/MRA58N) '

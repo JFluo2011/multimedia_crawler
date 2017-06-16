@@ -6,6 +6,7 @@
 # See: http://doc.scrapy.org/en/latest/topics/item-pipeline.html
 import os
 import copy
+import bisect
 import logging
 
 import scrapy
@@ -40,6 +41,7 @@ class AudioVideoGetPipeline(object):
                 'media_urls': item['media_urls'],
             }
             self.col.update({'url': item['url']}, data, upsert=True)
+            # self.col.update({'url': item['url']}, {'$set': {'info': item['info']}})
             # self.col.insert(data)
         except Exception, err:
             logging.error(str(err))
@@ -59,11 +61,17 @@ class IQiYiPipeline(object):
         self.col = self.db.get_collection(settings['MONGODB_COLLECTION'])
         self.col.ensure_index('url', unique=True)
 
+    def insort(self, elem):
+        index = bisect.bisect(self.items['info']['index'], elem)
+        bisect.insort(self.items['info']['index'], elem)
+        return index
+
     def process_item(self, item, spider):
         if self.items['url'] is None:
             self.items = copy.deepcopy(item)
         elif item['url'] == self.items['url']:
-            self.items['media_urls'].extend(item['media_urls'])
+            index = self.insort(item['info']['index'][0])
+            self.items['media_urls'].insert(index, item['media_urls'][0])
         else:
             return self.__insert_item(item=item)
 
@@ -72,6 +80,7 @@ class IQiYiPipeline(object):
 
     def __insert_item(self, item=None):
         item, self.items = self.items, item
+        item.pop('index', None)
         try:
             data = {
                 'url': item['url'],

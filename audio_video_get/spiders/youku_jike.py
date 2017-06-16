@@ -15,7 +15,7 @@ from audio_video_get.common.common import get_md5
 
 class YouKuJiKeSpider(CrawlSpider):
     name = "youku_jike"
-    download_delay = 10
+    download_delay = 5
     # allowed_domains = ["youku.com"]
     start_urls = ['http://i.youku.com/u/UMzE4MTU1MDEwMA==/videos']
 
@@ -33,7 +33,7 @@ class YouKuJiKeSpider(CrawlSpider):
         },
         'DOWNLOADER_MIDDLEWARES': {
             'audio_video_get.middlewares.RotateUserAgentMiddleware': 400,
-            'audio_video_get.middlewares.AudioVideoGetDupFilterMiddleware': 1,
+            'audio_video_get.middlewares.YouKuJiKeDupFilterMiddleware': 1,
         },
     }
 
@@ -45,32 +45,29 @@ class YouKuJiKeSpider(CrawlSpider):
             item['media_type'] = 'video'
             item['stack'] = []
             item['download'] = 0
-            item['file_dir'] = os.path.join(settings['FILES_STORE'], self.name)
+            item['file_dir'] = os.path.join(settings['FILES_STORE'], item['media_type'], self.name)
             item['url'] = 'http:' + sel.xpath('div[@class="v-link"]/a/@href').extract()[0]
             item['file_name'] = get_md5(item['url'])
 
-            try:
-                item['info'] = {
-                    'title': sel.xpath('.//div[@class="v-meta-title"]/a/text()').extract()[0].strip(),
-                    'link': sel.xpath('.//div[@class="v-meta-title"]/a/@href').extract()[0],
-                    'date': sel.xpath('.//span[@class="v-publishtime"]/text()').extract()[0],
-                    'author': 'UMzE4MTU1MDEwMA==',
-                }
-            except Exception as err:
-                self.logger.warning('page: {}, url: {}, error: {}'.format(response.url, item['url'], str(err)))
+            item['info'] = {
+                'title': sel.xpath('.//div[@class="v-meta-title"]/a/@title').extract_first(default='').strip(),
+                'link': item['url'],
+                'date': sel.xpath('.//span[@class="v-publishtime"]/text()').extract_first(default=''),
+                'author': 'UMzE4MTU1MDEwMA==',
+                'play_count': sel.xpath('.//span[@class="v-num"]/text()').extract_first(default=''),
+            }
             params = {
-                'spm': (re.findall(r'meta name="data-spm" content="(.*?)"', response.body)[0] + '.' +
-                        re.findall(r'body class="yk-w970" data-spm="(\d+)"', response.body)[0] + '.0.0')
+                'spm': (re.search(r'meta name="data-spm" content="(.*?)"', response.body).group(1) + '.' +
+                        re.search(r'body class="yk-w970" data-spm="(\d+)"', response.body).group(1) + '.0.0')
             }
             yield scrapy.FormRequest(url=item['url'], method='GET', meta={'item': item}, formdata=params,
                                      callback=self.parse_video_url)
 
     def parse_video_url(self, response):
         item = response.meta['item']
-        try:
-            vid = re.findall(r'id_(.*?).html', response.url)[0]
-        except Exception as err:
-            self.logger.error('url: {}, error: {}'.format(response.url, str(err)))
+        vid = re.search(r'id_(.*?).html|$', response.url).group(1)
+        if vid is None:
+            self.logger.error('url: {}, error: failed to find vid'.format(response.url))
             return
         params = {
             'vid': vid,

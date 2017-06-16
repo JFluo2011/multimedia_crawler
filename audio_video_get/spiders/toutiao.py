@@ -8,6 +8,7 @@ import random
 import binascii
 import base64
 
+from pymongo import MongoClient
 import scrapy
 from scrapy.conf import settings
 
@@ -20,7 +21,6 @@ class ToutiaoSpider(scrapy.Spider):
     download_delay = 5
     user_ids = ['6975800262', '50590890693', '5857206714', '6264649967', '6373263682',
                 '6905052877', '6887101617', '6886776520', '6976474883']
-    # user_ids = ['6264649967', '6373263682', '6905052877', '6887101617', '6886776520']
     base_url = 'http://www.toutiao.com/c/user/article/'
     custom_settings = {
         'ITEM_PIPELINES': {
@@ -41,22 +41,24 @@ class ToutiaoSpider(scrapy.Spider):
         json_data = json.loads(response.body)
         if json_data['has_more'] != 0:
             max_behot_time = json_data['next']['max_behot_time']
-            user_id = re.findall(r'user_id=(\d+)', response.url)[0]
+            user_id = re.search(r'user_id=(\d+)', response.url).group(1)
             for data in json_data['data']:
                 item = AudioVideoGetItem()
                 item['stack'] = []
                 item['download'] = 0
                 item['host'] = 'toutiao'
                 item['media_type'] = 'video'
-                item['file_dir'] = os.path.join(settings['FILES_STORE'], self.name)
+                item['file_dir'] = os.path.join(settings['FILES_STORE'], item['media_type'], self.name)
                 if 'item_id' in data:
                     item['url'] = 'http://www.toutiao.com/i' + data['item_id'] + '/'
                 else:
                     item['url'] = data['display_url'].replace('group/', 'a')
+
                 item['file_name'] = get_md5(item['url'])
                 item['media_urls'] = [item['url']]
                 item['info'] = {
                     'title': data.get('title', ''),
+                    'link': item['url'],
                     'intro': data.get('abstract', ''),
                     'author': data.get('source', ''),
                     'play_count': data.get('detail_play_effective_count', 0),
@@ -72,10 +74,9 @@ class ToutiaoSpider(scrapy.Spider):
 
     def parse_video_id(self, response):
         item = response.meta['item']
-        try:
-            video_id = re.findall(r"videoid:[ ]*?'(.*?)'", response.body)[0]
-        except Exception as err:
-            self.logger.error('url: {}, error: {}'.format(response.url, str(err)))
+        video_id = re.search(r"videoid:[ ]*?'(.*?)'", response.body).group(1)
+        if video_id is None:
+            self.logger.error('url: {}, error: failed to get video_id'.format(response.url))
             return
 
         url = 'http://ib.365yg.com/video/urls/v/1/toutiao/mp4/' + video_id

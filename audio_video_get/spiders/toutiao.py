@@ -8,7 +8,6 @@ import random
 import binascii
 import base64
 
-from pymongo import MongoClient
 import scrapy
 from scrapy.conf import settings
 

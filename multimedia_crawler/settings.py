@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Scrapy settings for audio_video_get project
+# Scrapy settings for multimedia_crawler project
 #
 # For simplicity, this file contains only settings considered important or
 # commonly used. You can find more settings consulting the documentation:
@@ -12,13 +12,13 @@ import os
 import logging
 
 BASE_PATH = os.path.join(os.path.abspath('.'))
-BOT_NAME = 'audio_video_get'
+BOT_NAME = 'multimedia_crawler'
 
-SPIDER_MODULES = ['audio_video_get.spiders']
-NEWSPIDER_MODULE = 'audio_video_get.spiders'
+SPIDER_MODULES = ['multimedia_crawler.spiders']
+NEWSPIDER_MODULE = 'multimedia_crawler.spiders'
 
 # Crawl responsibly by identifying yourself (and your website) on the user-agent
-# USER_AGENT = 'audio_video_get (+http://www.yourdomain.com)'
+# USER_AGENT = 'multimedia_crawler (+http://www.yourdomain.com)'
 
 # Obey robots.txt rules
 # ROBOTSTXT_OBEY = True
@@ -50,15 +50,15 @@ COOKIES_ENABLED = False
 # Enable or disable spider middlewares
 # See http://scrapy.readthedocs.org/en/latest/topics/spider-middleware.html
 # SPIDER_MIDDLEWARES = {
-#    'audio_video_get.middlewares.AudioVideoGetSpiderMiddleware': 543,
+#    'multimedia_crawler.middlewares.MultimediaCrawlerSpiderMiddleware': 543,
 # }
 
 # Enable or disable downloader middlewares
 # See http://scrapy.readthedocs.org/en/latest/topics/downloader-middleware.html
 DOWNLOADER_MIDDLEWARES = {
-    # 'audio_video_get.middlewares.MyCustomDownloaderMiddleware': 543,
-    # 'audio_video_get.middlewares.RotateUserAgentMiddleware': 400,
-    # 'audio_video_get.middlewares.TouTiaoDupFilterMiddleware': 1,
+    # 'multimedia_crawler.middlewares.MyCustomDownloaderMiddleware': 543,
+    # 'multimedia_crawler.middlewares.RotateUserAgentMiddleware': 400,
+    # 'multimedia_crawler.middlewares.TouTiaoDupFilterMiddleware': 1,
 }
 
 # log
@@ -83,10 +83,10 @@ FILES_STORE = '.'
 # Configure item pipelines
 # See http://scrapy.readthedocs.org/en/latest/topics/item-pipeline.html
 ITEM_PIPELINES = {
-    # 'audio_video_get.pipelines.AudioVideoGetPipeline': 300,
+    # 'multimedia_crawler.pipelines.MultimediaCrawlerPipeline': 300,
     # 'scrapy.pipelines.files.FilesPipeline': 200,
-    # 'audio_video_get.pipelines.ToutiaoPipeline': 100,
-    # 'audio_video_get.pipelines.ToutiaoFilePipeline': 200,
+    # 'multimedia_crawler.pipelines.ToutiaoPipeline': 100,
+    # 'multimedia_crawler.pipelines.ToutiaoFilePipeline': 200,
 }
 
 # Enable and configure the AutoThrottle extension (disabled by default)

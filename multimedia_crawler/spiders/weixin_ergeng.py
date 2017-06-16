@@ -10,9 +10,9 @@ from scrapy.conf import settings
 from scrapy.spiders import CrawlSpider, Rule
 from scrapy.linkextractors import LinkExtractor
 
-from audio_video_get.items import AudioVideoGetItem
-from audio_video_get.common.common import get_md5
-from audio_video_get.common.v_qq_com import VQQCom
+from multimedia_crawler.items import MultimediaCrawlerItem
+from multimedia_crawler.common.common import get_md5
+from multimedia_crawler.common.v_qq_com import VQQCom
 
 
 class WeiXinErGengSpider(CrawlSpider):
@@ -31,11 +31,11 @@ class WeiXinErGengSpider(CrawlSpider):
 
     custom_settings = {
         'ITEM_PIPELINES': {
-            'audio_video_get.pipelines.AudioVideoGetPipeline': 100,
+            'multimedia_crawler.pipelines.MultimediaCrawlerPipeline': 100,
         },
         'DOWNLOADER_MIDDLEWARES': {
-            'audio_video_get.middlewares.WeiXinErGengUserAgentMiddleware': 400,
-            'audio_video_get.middlewares.AudioVideoGetDupFilterMiddleware': 1,
+            'multimedia_crawler.middlewares.WeiXinErGengUserAgentMiddleware': 400,
+            'multimedia_crawler.middlewares.MultimediaCrawlerDupFilterMiddleware': 1,
         },
     }
 
@@ -46,7 +46,7 @@ class WeiXinErGengSpider(CrawlSpider):
     def parse_pages(self, response):
         sel_list = response.xpath('//div[@class="feed_item_question"]')
         for sel in sel_list:
-            item = AudioVideoGetItem()
+            item = MultimediaCrawlerItem()
             item['host'] = 'weixin_ergeng'
             item['stack'] = []
             item['download'] = 0

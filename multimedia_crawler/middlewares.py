@@ -18,7 +18,7 @@ from scrapy.conf import settings
 from scrapy.exceptions import IgnoreRequest
 
 
-class AudioVideoGetDupFilterMiddleware(object):
+class MultimediaCrawlerDupFilterMiddleware(object):
     def __init__(self):
         self.client = MongoClient(settings['MONGODB_SERVER'], settings['MONGODB_PORT'])
         self.db = self.client.get_database(settings['MONGODB_DB'])
@@ -93,7 +93,7 @@ class IQiYiSpiderMiddleware(object):
         return index
 
 
-class AudioVideoGetSpiderMiddleware(object):
+class MultimediaCrawlerSpiderMiddleware(object):
     @classmethod
     def from_crawler(cls, crawler):
         # This method is used by Scrapy to create your spiders.

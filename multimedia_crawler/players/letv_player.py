@@ -5,10 +5,10 @@ import json
 import random
 import base64
 
-from scrapy.exceptions import CloseSpider
+# from scrapy.exceptions import CloseSpider
 
 from base_player import BasePlayer
-from audio_video_get.common.common import get_md5
+from multimedia_crawler.common.common import get_md5
 
 
 class LetvPlayer(BasePlayer):

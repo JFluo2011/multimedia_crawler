@@ -8,11 +8,11 @@ from scrapy.conf import settings
 from scrapy.spiders import CrawlSpider, Rule
 from scrapy.linkextractors import LinkExtractor
 
-from audio_video_get.items import AudioVideoGetItem
-from audio_video_get.players.letv_player import LetvPlayer
-from audio_video_get.players.qq_player import QQPlayer
-from audio_video_get.players.ergeng_player import ErgengPlayer
-from audio_video_get.players.youku_player import YouKuPlayer
+from multimedia_crawler.items import MultimediaCrawlerItem
+from multimedia_crawler.players.letv_player import LetvPlayer
+from multimedia_crawler.players.qq_player import QQPlayer
+from multimedia_crawler.players.ergeng_player import ErgengPlayer
+from multimedia_crawler.players.youku_player import YouKuPlayer
 
 
 # class ErGengSpider(CrawlSpider):
@@ -34,17 +34,17 @@ class ErGengSpider(scrapy.Spider):
 
     custom_settings = {
         'ITEM_PIPELINES': {
-            'audio_video_get.pipelines.AudioVideoGetPipeline': 100,
+            'multimedia_crawler.pipelines.MultimediaCrawlerPipeline': 100,
         },
         'DOWNLOADER_MIDDLEWARES': {
-            'audio_video_get.middlewares.MobileUserAgentMiddleware': 400,
-            'audio_video_get.middlewares.AudioVideoGetDupFilterMiddleware': 1,
+            'multimedia_crawler.middlewares.MobileUserAgentMiddleware': 400,
+            'multimedia_crawler.middlewares.MultimediaCrawlerDupFilterMiddleware': 1,
         },
     }
 
     # def parse_video(self, response):
     def parse(self, response):
-        item = AudioVideoGetItem()
+        item = MultimediaCrawlerItem()
         item['host'] = 'ergeng'
         item['media_type'] = 'video'
         item['stack'] = []

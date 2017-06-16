@@ -12,9 +12,9 @@ from urlparse import urljoin
 import scrapy
 from scrapy.conf import settings
 
-from audio_video_get.items import AudioVideoGetItem
-from audio_video_get.common.common import get_md5
-from audio_video_get.common.v_qq_com import VQQCom
+from multimedia_crawler.items import MultimediaCrawlerItem
+from multimedia_crawler.common.common import get_md5
+from multimedia_crawler.common.v_qq_com import VQQCom
 
 
 class QQVideoSpider(scrapy.Spider):
@@ -33,11 +33,11 @@ class QQVideoSpider(scrapy.Spider):
 
     custom_settings = {
         'ITEM_PIPELINES': {
-            'audio_video_get.pipelines.AudioVideoGetPipeline': 100,
+            'multimedia_crawler.pipelines.MultimediaCrawlerPipeline': 100,
         },
         'DOWNLOADER_MIDDLEWARES': {
-            'audio_video_get.middlewares.RotateUserAgentMiddleware': 400,
-            'audio_video_get.middlewares.AudioVideoGetDupFilterMiddleware': 1,
+            'multimedia_crawler.middlewares.RotateUserAgentMiddleware': 400,
+            'multimedia_crawler.middlewares.MultimediaCrawlerDupFilterMiddleware': 1,
         },
     }
 
@@ -77,7 +77,7 @@ class QQVideoSpider(scrapy.Spider):
         user = response.meta['user']
         json_data = json.loads(response.body[response.body.find('{'): response.body.rfind('}')+1])
         for data in json_data['videolst']:
-            item = AudioVideoGetItem()
+            item = MultimediaCrawlerItem()
             item['host'] = 'qq_video'
             item['stack'] = []
             item['download'] = 0

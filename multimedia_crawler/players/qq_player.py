@@ -2,8 +2,8 @@
 import json
 
 from base_player import BasePlayer
-from audio_video_get.common.common import get_md5
-from audio_video_get.common.v_qq_com import VQQCom
+from multimedia_crawler.common.common import get_md5
+from multimedia_crawler.common.v_qq_com import VQQCom
 
 
 class QQPlayer(BasePlayer):

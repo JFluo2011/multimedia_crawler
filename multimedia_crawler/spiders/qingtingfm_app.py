@@ -6,8 +6,8 @@ import json
 import scrapy
 from scrapy.conf import settings
 
-from audio_video_get.items import AudioVideoGetItem
-from audio_video_get.common.common import get_md5
+from multimedia_crawler.items import MultimediaCrawlerItem
+from multimedia_crawler.common.common import get_md5
 
 
 class QingTingFMAppSpider(scrapy.Spider):
@@ -18,11 +18,11 @@ class QingTingFMAppSpider(scrapy.Spider):
 
     custom_settings = {
         'ITEM_PIPELINES': {
-            'audio_video_get.pipelines.AudioVideoGetPipeline': 100,
+            'multimedia_crawler.pipelines.MultimediaCrawlerPipeline': 100,
         },
         'DOWNLOADER_MIDDLEWARES': {
-            'audio_video_get.middlewares.QingTingFMAppUserAgentMiddleware': 400,
-            'audio_video_get.middlewares.AudioVideoGetDupFilterMiddleware': 1,
+            'multimedia_crawler.middlewares.QingTingFMAppUserAgentMiddleware': 400,
+            'multimedia_crawler.middlewares.MultimediaCrawlerDupFilterMiddleware': 1,
         },
     }
 
@@ -80,7 +80,7 @@ class QingTingFMAppSpider(scrapy.Spider):
             return
 
         for data in json_data['data']:
-            item = AudioVideoGetItem()
+            item = MultimediaCrawlerItem()
             item['host'] = 'qingtingfm_app'
             item['media_type'] = 'audio'
             item['stack'] = []

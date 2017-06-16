@@ -9,8 +9,8 @@ import datetime
 import scrapy
 from scrapy.conf import settings
 
-from audio_video_get.items import AudioVideoGetItem
-from audio_video_get.common.common import get_md5, base_n
+from multimedia_crawler.items import MultimediaCrawlerItem
+from multimedia_crawler.common.common import get_md5, base_n
 
 
 class IQiYiSpider(scrapy.Spider):
@@ -23,16 +23,16 @@ class IQiYiSpider(scrapy.Spider):
 
     custom_settings = {
         'ITEM_PIPELINES': {
-            'audio_video_get.pipelines.AudioVideoGetPipeline': 100,
-            # 'audio_video_get.pipelines.IQiYiPipeline': 100,
+            'multimedia_crawler.pipelines.MultimediaCrawlerPipeline': 100,
+            # 'multimedia_crawler.pipelines.IQiYiPipeline': 100,
         },
         'DOWNLOADER_MIDDLEWARES': {
-            'audio_video_get.middlewares.RotateUserAgentMiddleware': 400,
-            'audio_video_get.middlewares.AudioVideoGetDupFilterMiddleware': 1,
+            'multimedia_crawler.middlewares.RotateUserAgentMiddleware': 400,
+            'multimedia_crawler.middlewares.MultimediaCrawlerDupFilterMiddleware': 1,
         },
         # 'SPIDER_MIDDLEWARES': {
         #     # 'scrapy.spidermiddlewares.offsite.OffsiteMiddleware': None,
-        #     'audio_video_get.middlewares.IQiYiSpiderMiddleware': 500,
+        #     'multimedia_crawler.middlewares.IQiYiSpiderMiddleware': 500,
         # }
     }
 
@@ -47,7 +47,7 @@ class IQiYiSpider(scrapy.Spider):
     def parse(self, response):
         selectors = response.xpath(r'//li[@j-delegate="colitem"]')
         for sel in selectors:
-            item = AudioVideoGetItem()
+            item = MultimediaCrawlerItem()
             item['stack'] = []
             item['download'] = 0
             item['host'] = 'iqiyi'

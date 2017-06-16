@@ -8,7 +8,7 @@
 import scrapy
 
 
-class AudioVideoGetItem(scrapy.Item):
+class MultimediaCrawlerItem(scrapy.Item):
     # define the fields for your item here like:
     # name = scrapy.Field()
     media_type = scrapy.Field()

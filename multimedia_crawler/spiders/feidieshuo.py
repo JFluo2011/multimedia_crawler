@@ -6,8 +6,8 @@ from scrapy.conf import settings
 from scrapy.spiders import CrawlSpider, Rule
 from scrapy.linkextractors import LinkExtractor
 
-from audio_video_get.items import AudioVideoGetItem
-from audio_video_get.common.common import get_md5
+from multimedia_crawler.items import MultimediaCrawlerItem
+from multimedia_crawler.common.common import get_md5
 
 
 class FeiDieShuoSpider(CrawlSpider):
@@ -29,16 +29,16 @@ class FeiDieShuoSpider(CrawlSpider):
 
     custom_settings = {
         'ITEM_PIPELINES': {
-            'audio_video_get.pipelines.AudioVideoGetPipeline': 100,
+            'multimedia_crawler.pipelines.MultimediaCrawlerPipeline': 100,
         },
         'DOWNLOADER_MIDDLEWARES': {
-            'audio_video_get.middlewares.RotateUserAgentMiddleware': 400,
-            'audio_video_get.middlewares.AudioVideoGetDupFilterMiddleware': 1,
+            'multimedia_crawler.middlewares.RotateUserAgentMiddleware': 400,
+            'multimedia_crawler.middlewares.MultimediaCrawlerDupFilterMiddleware': 1,
         },
     }
 
     def parse_video(self, response):
-        item = AudioVideoGetItem()
+        item = MultimediaCrawlerItem()
         item['host'] = 'feidieshuo'
         item['media_type'] = 'video'
         item['stack'] = []

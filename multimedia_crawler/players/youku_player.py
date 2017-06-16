@@ -7,7 +7,7 @@ import json
 import scrapy
 
 from base_player import BasePlayer
-from audio_video_get.common.common import get_md5
+from multimedia_crawler.common.common import get_md5
 
 
 class YouKuPlayer(BasePlayer):

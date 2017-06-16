@@ -11,8 +11,8 @@ import base64
 import scrapy
 from scrapy.conf import settings
 
-from audio_video_get.common.common import get_md5
-from audio_video_get.items import AudioVideoGetItem
+from multimedia_crawler.common.common import get_md5
+from multimedia_crawler.items import MultimediaCrawlerItem
 
 
 class ToutiaoSpider(scrapy.Spider):
@@ -23,11 +23,11 @@ class ToutiaoSpider(scrapy.Spider):
     base_url = 'http://www.toutiao.com/c/user/article/'
     custom_settings = {
         'ITEM_PIPELINES': {
-            'audio_video_get.pipelines.AudioVideoGetPipeline': 100,
+            'multimedia_crawler.pipelines.MultimediaCrawlerPipeline': 100,
         },
         'DOWNLOADER_MIDDLEWARES': {
-            'audio_video_get.middlewares.RotateUserAgentMiddleware': 400,
-            'audio_video_get.middlewares.AudioVideoGetDupFilterMiddleware': 1,
+            'multimedia_crawler.middlewares.RotateUserAgentMiddleware': 400,
+            'multimedia_crawler.middlewares.MultimediaCrawlerDupFilterMiddleware': 1,
         },
     }
 
@@ -42,7 +42,7 @@ class ToutiaoSpider(scrapy.Spider):
             max_behot_time = json_data['next']['max_behot_time']
             user_id = re.search(r'user_id=(\d+)', response.url).group(1)
             for data in json_data['data']:
-                item = AudioVideoGetItem()
+                item = MultimediaCrawlerItem()
                 item['stack'] = []
                 item['download'] = 0
                 item['host'] = 'toutiao'

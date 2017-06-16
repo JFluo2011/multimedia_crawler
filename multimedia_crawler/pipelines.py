@@ -15,10 +15,10 @@ from scrapy.exceptions import DropItem
 from pymongo import MongoClient
 from scrapy.conf import settings
 
-from items import AudioVideoGetItem
+from items import MultimediaCrawlerItem
 
 
-class AudioVideoGetPipeline(object):
+class MultimediaCrawlerPipeline(object):
     def __init__(self):
         self.client = MongoClient(settings['MONGODB_SERVER'], settings['MONGODB_PORT'])
         self.db = self.client.get_database(settings['MONGODB_DB'])
@@ -50,7 +50,7 @@ class AudioVideoGetPipeline(object):
 
 
 class IQiYiPipeline(object):
-    items = AudioVideoGetItem()
+    items = MultimediaCrawlerItem()
     items['url'] = None
 
     def __init__(self):
@@ -109,7 +109,7 @@ class YouKuJiKeFilePipeline(FilesPipeline):
         if 'MONGODB_USER' in settings.keys():
             self.db.authenticate(settings['MONGODB_USER'], settings['MONGODB_PASSWORD'])
         self.col = self.db.get_collection(settings['MONGODB_COLLECTION'])
-        self.item = AudioVideoGetItem()
+        self.item = MultimediaCrawlerItem()
 
     @staticmethod
     def _handle_redirect(file_url):

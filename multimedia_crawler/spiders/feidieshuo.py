@@ -42,7 +42,7 @@ class FeiDieShuoSpider(CrawlSpider):
         item['host'] = 'feidieshuo'
         item['media_type'] = 'video'
         item['stack'] = []
-        item['download'] = 1
+        item['download'] = 0
         item['file_dir'] = os.path.join(settings['FILES_STORE'], item['media_type'], self.name)
         item['url'] = response.url
         item['file_name'] = get_md5(item['url'])

@@ -23,11 +23,13 @@ class QQVideoSpider(scrapy.Spider):
     # allowed_domains = ['chuansong.me', 'video.qq.com']
     users = {
         # '0093c8b4c792637609ad9e42a10507e0': '日食记',
-        'jikezhishi': '即刻video',
+        # 'jikezhishi': '即刻video',
         # 'kehua': '刻画',
         # 'yitiao': '一条',
         # 'vicechina': 'VICE中国 ',
+        # 'vicechina': 'VICE中国 ',
         # '0713f8d7448192de': '一人食',
+        'baozoumanhua': '暴走漫画',
     }
     base_url = 'http://v.qq.com/vplus/{}/videos'
 
@@ -114,12 +116,12 @@ class QQVideoSpider(scrapy.Spider):
         except Exception as err:
             self.logger.error('url: {}, error: {}'.format(item['url'], str(err)))
             return
-        else:
-            if json_data['exem'] != 0:
-                self.logger.warning('url: {}, exem: {}'.format(item['url'], json_data['exem']))
-                if 'msg' in json_data:
-                    self.logger.warning('url: {}, msg: {}'.format(item['url'], json_data['msg']))
-                return
+        # else:
+        #     if json_data['exem'] != 0:
+        #         self.logger.warning('url: {}, exem: {}'.format(item['url'], json_data['exem']))
+        #         if 'msg' in json_data:
+        #             self.logger.warning('url: {}, msg: {}'.format(item['url'], json_data['msg']))
+        #         return
 
         url, ext = self.v_qq_com.get_video_info(guid, json_data)
         if url is None:

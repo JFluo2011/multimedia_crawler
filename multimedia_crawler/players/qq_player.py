@@ -1,5 +1,8 @@
 # -*- coding: utf-8 -*-
+import re
 import json
+
+import scrapy
 
 from base_player import BasePlayer
 from multimedia_crawler.common.common import get_md5
@@ -19,6 +22,10 @@ class QQPlayer(BasePlayer):
 
     def parse_video(self, response):
         item = response.meta['item']
+        # item['info']['play_count'] = response.xpath(xpath).extract_first(default='')
+        # if (item['info']['play_count'] == '') and (not re.findall(r'专辑播放', response.body)):
+        #     item['info']['play_count'] = (response.xpath('//em[@id="mod_cover_playnum"]/text()')
+        #                                   .extract_first(default=''))
         if not self.__get_json(response):
             return
 
@@ -26,6 +33,22 @@ class QQPlayer(BasePlayer):
             return
         item['media_urls'] = self.media_urls
         item['file_name'] = self.file_name
+
+        url = 'https://v.qq.com/x/page/{}.html'.format(self.kwargs['vid'])
+        meta = {
+            'item': item,
+            'vid': self.kwargs['vid'],
+        }
+        yield scrapy.FormRequest(url, method='GET', meta=meta, callback=self.parse_play_count)
+
+    def parse_play_count(self, response):
+        item = response.meta['item']
+        vid = response.meta['vid']
+        xpath = '//span[@data-id="{}"]/text()'.format(vid)
+        item['info']['play_count'] = response.xpath(xpath).extract_first(default='')
+        if (item['info']['play_count'] == '') and (not re.findall(r'专辑播放', response.body)):
+            item['info']['play_count'] = (response.xpath('//em[@id="mod_cover_playnum"]/text()')
+                                          .extract_first(default=''))
         return item
 
     def __get_media_urls(self):

@@ -18,14 +18,16 @@ class YouKuPlayer(BasePlayer):
         self.url = self.kwargs['player_url']
         self.method = 'GET'
         self.params = {}
+        self.video_id = ''
 
     def parse_video(self, response):
         item = response.meta['item']
         url = 'https://api.youku.com/players/custom.json'
+        self.video_id = self.url.split('/')[-1]
         params = {
             'refer': self.url,
             'client_id': re.findall(r'\.client_id\s*=\s*"(.*?)"', response.body)[0],
-            'video_id': self.url.split('/')[-1],
+            'video_id': self.video_id,
             'version': '1.0',
             'type': 'h5',
             'embsig': '',
@@ -65,7 +67,12 @@ class YouKuPlayer(BasePlayer):
                 return
 
         try:
+            item['info']['play_count'] = json_data['data']['video'][0]['videoid_play']
+            item['info']['author'] = json_data['data']['video'][0]['username']
+        except:
+            pass
 
+        try:
             item['media_urls'] = [data['cdn_url'] for data in json_data['data']['stream'][0]['segs']]
             item['file_name'] = get_md5(self.page_url) + '.' + re.findall(r'st/(.*?)/fileid', item['media_urls'][0])[0]
         except Exception as err:
@@ -75,5 +82,25 @@ class YouKuPlayer(BasePlayer):
             if not item['media_urls']:
                 self.logger.error('url: {}, error: did not get any URL in the json data'.format(self.page_url))
                 return
+
+        url = 'http://v.youku.com/v_show/id_{}.html'.format(self.video_id)
+        yield scrapy.Request(url=url, meta={'item': item}, callback=self.parse_vid)
+
+    def parse_vid(self, response):
+        item = response.meta['item']
+        vid = re.findall(r'videoId:"(\d+)"', response.body)[0]
+        url = ('http://v.youku.com/action/getVideoPlayInfo?beta&timestamp={}&vid={}&showid=290031&'
+               'param[]=share&param[]=favo&param[]=download&param[]=phonewatch&'
+               'param[]=updown&callback=tuijsonp5').format(str(int(time.time()*1000)), vid)
+
+        yield scrapy.Request(url=url, meta={'item': item}, callback=self.parse_play_counts)
+
+    def parse_play_counts(self, response):
+        item = response.meta['item']
+        try:
+            json_data = json.loads(response.body[response.body.find('{'): response.body.rfind('}') + 1])
+            item['info']['play_count'] = json_data['data']['stat']['vv']
+        except:
+            pass
 
         return item

@@ -12,19 +12,14 @@ import logging
 import scrapy
 from scrapy.pipelines.files import FilesPipeline
 from scrapy.exceptions import DropItem
-from pymongo import MongoClient
-from scrapy.conf import settings
 
 from items import MultimediaCrawlerItem
+from common.common import setup_mongodb
 
 
 class MultimediaCrawlerPipeline(object):
     def __init__(self):
-        self.client = MongoClient(settings['MONGODB_SERVER'], settings['MONGODB_PORT'])
-        self.db = self.client.get_database(settings['MONGODB_DB'])
-        if 'MONGODB_USER' in settings.keys():
-            self.db.authenticate(settings['MONGODB_USER'], settings['MONGODB_PASSWORD'])
-        self.col = self.db.get_collection(settings['MONGODB_COLLECTION'])
+        self.col = setup_mongodb()
         self.col.ensure_index('url', unique=True)
 
     def process_item(self, item, spider):
@@ -36,6 +31,7 @@ class MultimediaCrawlerPipeline(object):
                 'host': item['host'],
                 'file_dir': item['file_dir'],
                 'download': item['download'],
+                'extract': item['extract'],
                 'info': item['info'],
                 'stack': item['stack'],
                 'media_urls': item['media_urls'],
@@ -49,17 +45,9 @@ class MultimediaCrawlerPipeline(object):
         return item
 
 
-class IQiYiPipeline(object):
+class IQiYiPipeline(MultimediaCrawlerPipeline):
     items = MultimediaCrawlerItem()
     items['url'] = None
-
-    def __init__(self):
-        self.client = MongoClient(settings['MONGODB_SERVER'], settings['MONGODB_PORT'])
-        self.db = self.client.get_database(settings['MONGODB_DB'])
-        if 'MONGODB_USER' in settings.keys():
-            self.db.authenticate(settings['MONGODB_USER'], settings['MONGODB_PASSWORD'])
-        self.col = self.db.get_collection(settings['MONGODB_COLLECTION'])
-        self.col.ensure_index('url', unique=True)
 
     def insort(self, elem):
         index = bisect.bisect(self.items['info']['index'], elem)
@@ -89,6 +77,7 @@ class IQiYiPipeline(object):
                 'host': item['host'],
                 'file_dir': item['file_dir'],
                 'download': item['download'],
+                'extract': item['extract'],
                 'info': item['info'],
                 'stack': item['stack'],
                 'media_urls': item['media_urls'],
@@ -104,11 +93,7 @@ class IQiYiPipeline(object):
 class YouKuJiKeFilePipeline(FilesPipeline):
     def __init__(self, *args, **kwargs):
         super(YouKuJiKeFilePipeline, self).__init__(*args, **kwargs)
-        self.client = MongoClient(settings['MONGODB_SERVER'], settings['MONGODB_PORT'])
-        self.db = self.client.get_database(settings['MONGODB_DB'])
-        if 'MONGODB_USER' in settings.keys():
-            self.db.authenticate(settings['MONGODB_USER'], settings['MONGODB_PASSWORD'])
-        self.col = self.db.get_collection(settings['MONGODB_COLLECTION'])
+        self.col = setup_mongodb()
         self.item = MultimediaCrawlerItem()
 
     @staticmethod

@@ -10,14 +10,16 @@ import scrapy
 from scrapy.conf import settings
 
 from multimedia_crawler.items import MultimediaCrawlerItem
-from multimedia_crawler.common.common import get_md5, base_n
+from multimedia_crawler.common.common import get_md5, base_n, WebUser
 
 
 class IQiYiSpider(scrapy.Spider):
     name = "iqiyi"
     download_delay = 5
-    users = ['1190686219', '1233288265']
-    # users = ['1233288265']
+    users = [
+        WebUser(id='1190686219', name='造物集', ks3_name='zaowuji'),
+        WebUser(id='1233288265', name='微在涨姿势', ks3_name='weizaizhangzishi'),
+    ]
     # allowed_domains = ["youku.com"]
     base_url = 'http://www.iqiyi.com/u/{}/v'
 
@@ -42,17 +44,19 @@ class IQiYiSpider(scrapy.Spider):
                 'page': '1',
                 'video_type': '1',
             }
-            yield scrapy.FormRequest(self.base_url.format(user), method='GET', formdata=params)
+            yield scrapy.FormRequest(self.base_url.format(user), method='GET', formdata=params, meta={'user': user})
 
     def parse(self, response):
+        user = response.meta['user']
         selectors = response.xpath(r'//li[@j-delegate="colitem"]')
         for sel in selectors:
             item = MultimediaCrawlerItem()
             item['stack'] = []
             item['download'] = 0
+            item['extract'] = 0
             item['host'] = 'iqiyi'
             item['media_type'] = 'video'
-            item['file_dir'] = os.path.join(settings['FILES_STORE'], item['media_type'], self.name)
+            item['file_dir'] = os.path.join(settings['FILES_STORE'], item['media_type'], self.name, user.ks3_name)
             item['url'] = sel.xpath('./div[1]/a/@href').extract()[0]
             item['file_name'] = get_md5(item['url'])
             date = sel.xpath('./div[2]/p[2]/span[2]/text()').extract_first(default='').strip()
@@ -63,7 +67,7 @@ class IQiYiSpider(scrapy.Spider):
             else:
                 date = date[:-2]
             item['info'] = {'intro': '', 'date': date, 'link': item['url']}
-            item['info']['author'] = re.search(r'u/(\d+)/v|$', response.url).group(1) or ''
+            item['info']['author'] = user.name
             item['info']['title'] = sel.xpath('./div[1]/a/img/@title').extract_first(default='')
             yield scrapy.Request(url=item['url'], meta={'item': item}, callback=self.parse_params)
         sel_next_page = response.xpath(u'//a[text()="下一页"]')

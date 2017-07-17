@@ -13,7 +13,7 @@ import scrapy
 from scrapy.conf import settings
 
 from multimedia_crawler.items import MultimediaCrawlerItem
-from multimedia_crawler.common.common import get_md5
+from multimedia_crawler.common.common import get_md5, WebUser
 from multimedia_crawler.common.v_qq_com import VQQCom
 
 
@@ -21,16 +21,15 @@ class QQVideoSpider(scrapy.Spider):
     name = "qq_video"
     download_delay = 5
     # allowed_domains = ['chuansong.me', 'video.qq.com']
-    users = {
-        # '0093c8b4c792637609ad9e42a10507e0': '日食记',
-        # 'jikezhishi': '即刻video',
-        # 'kehua': '刻画',
-        # 'yitiao': '一条',
-        # 'vicechina': 'VICE中国 ',
-        # 'vicechina': 'VICE中国 ',
-        # '0713f8d7448192de': '一人食',
-        'baozoumanhua': '暴走漫画',
-    }
+    users = [
+        WebUser(id='0093c8b4c792637609ad9e42a10507e0', name='日食记', ks3_name='rishiji'),
+        WebUser(id='jikezhishi', name='即刻video', ks3_name='jike_video'),
+        WebUser(id='kehua', name='刻画', ks3_name='kehua'),
+        WebUser(id='yitiao', name='一条', ks3_name='yitiao'),
+        WebUser(id='vicechina', name='VICE中国', ks3_name='vicechina'),
+        WebUser(id='0713f8d7448192de', name='一人食', ks3_name='yirenshi'),
+        WebUser(id='baozoumanhua', name='暴走漫画', ks3_name='baozoumanhua'),
+    ]
     base_url = 'http://v.qq.com/vplus/{}/videos'
 
     custom_settings = {
@@ -48,8 +47,8 @@ class QQVideoSpider(scrapy.Spider):
         self.v_qq_com = VQQCom()
 
     def start_requests(self):
-        for user in self.users.iteritems():
-            url = self.base_url.format(user[0])
+        for user in self.users:
+            url = self.base_url.format(user.id)
             yield scrapy.Request(url, method='GET', meta={'user': user})
 
     def parse(self, response):
@@ -83,15 +82,16 @@ class QQVideoSpider(scrapy.Spider):
             item['host'] = 'qq_video'
             item['stack'] = []
             item['download'] = 0
+            item['extract'] = 0
             item['media_type'] = 'video'
-            item['file_dir'] = os.path.join(settings['FILES_STORE'], item['media_type'], self.name)
+            item['file_dir'] = os.path.join(settings['FILES_STORE'], item['media_type'], self.name, user.ks3_name)
             item['url'] = urljoin('https://v.qq.com/x/page/', data['vid'] + '.html')
             item['info'] = {
                 'title': data['title'],
                 'link': item['url'],
                 'play_count': data['play_count'],
                 'date': data['uploadtime'],
-                'author': user[1],
+                'author': user.name,
                 'author_homepage': self.base_url.format(user[0]),
                 'intro': data['desc'],
             }

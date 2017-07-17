@@ -13,18 +13,15 @@ import logging
 import scrapy
 from scrapy import signals
 from scrapy.downloadermiddlewares.useragent import UserAgentMiddleware
-from pymongo import MongoClient
-from scrapy.conf import settings
 from scrapy.exceptions import IgnoreRequest
+from scrapy.conf import settings
+
+from common.common import setup_mongodb
 
 
 class MultimediaCrawlerDupFilterMiddleware(object):
     def __init__(self):
-        self.client = MongoClient(settings['MONGODB_SERVER'], settings['MONGODB_PORT'])
-        self.db = self.client.get_database(settings['MONGODB_DB'])
-        if 'MONGODB_USER' in settings.keys():
-            self.db.authenticate(settings['MONGODB_USER'], settings['MONGODB_PASSWORD'])
-        self.col = self.db.get_collection(settings['MONGODB_COLLECTION'])
+        self.col = setup_mongodb()
 
     def process_request(self, request, spider):
         if self.col.find_one({'$and': [
@@ -39,14 +36,25 @@ class MultimediaCrawlerDupFilterMiddleware(object):
         return None
 
 
-class YouKuJiKeDupFilterMiddleware(object):
-    def __init__(self):
-        self.client = MongoClient(settings['MONGODB_SERVER'], settings['MONGODB_PORT'])
-        self.db = self.client.get_database(settings['MONGODB_DB'])
-        if 'MONGODB_USER' in settings.keys():
-            self.db.authenticate(settings['MONGODB_USER'], settings['MONGODB_PASSWORD'])
-        self.col = self.db.get_collection(settings['MONGODB_COLLECTION'])
+class YouKuJiKeDupFilterMiddleware(MultimediaCrawlerDupFilterMiddleware):
+    def process_request(self, request, spider):
+        if 'http://v.youku.com/v_show/' in request.url:
+            url = request.url.split('?')[0]
+        else:
+            url = request.url
+        if self.col.find_one({'$and': [
+            {'host': spider.name},
+            {'url': url},
+            # {'download': {'$in': [0, 1, 2]}}
+            {'download': {'$ne': -1}},
+        ]}):
+            logging.warning('the page is crawled, url is {0}'.format(url))
+            raise IgnoreRequest()
 
+        return None
+
+
+class YouKuDupFilterMiddleware(MultimediaCrawlerDupFilterMiddleware):
     def process_request(self, request, spider):
         if 'http://v.youku.com/v_show/' in request.url:
             url = request.url.split('?')[0]

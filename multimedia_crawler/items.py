@@ -17,6 +17,7 @@ class MultimediaCrawlerItem(scrapy.Item):
     host = scrapy.Field()
     file_dir = scrapy.Field()
     download = scrapy.Field()
+    extract = scrapy.Field()
     info = scrapy.Field()
     stack = scrapy.Field()
     file_name = scrapy.Field()

@@ -50,6 +50,7 @@ class WeiXinErGengSpider(CrawlSpider):
             item['host'] = 'weixin_ergeng'
             item['stack'] = []
             item['download'] = 0
+            item['extract'] = 0
             url = sel.xpath('.//a[@class="question_link"]/@href').extract_first(default='')
             if url == '':
                 continue

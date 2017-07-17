@@ -11,15 +11,24 @@ import base64
 import scrapy
 from scrapy.conf import settings
 
-from multimedia_crawler.common.common import get_md5
+from multimedia_crawler.common.common import get_md5, WebUser
 from multimedia_crawler.items import MultimediaCrawlerItem
 
 
 class ToutiaoSpider(scrapy.Spider):
     name = "toutiao"
     download_delay = 5
-    user_ids = ['6975800262', '50590890693', '5857206714', '6264649967', '6373263682',
-                '6905052877', '6887101617', '6886776520', '6976474883']
+    users = [
+        WebUser(id='6975800262', name='八斗', ks3_name='badou'),
+        WebUser(id='50590890693', name='Knews环球交叉点', ks3_name='huanqiujiaochadian'),
+        WebUser(id='5857206714', name='Maxonor创意公元', ks3_name='chuangyigongyuan'),
+        WebUser(id='6264649967', name='第一军情', ks3_name='diyijunqing'),
+        WebUser(id='6373263682', name='关东微喜剧', ks3_name='guandongweixijun'),
+        WebUser(id='6905052877', name='军榜', ks3_name='junbang'),
+        WebUser(id='6887101617', name='每日点兵', ks3_name='meiridianbing'),
+        WebUser(id='6886776520', name='未来网', ks3_name='weilaiwang'),
+        WebUser(id='6976474883', name='荔枝新闻', ks3_name='lizhixinwen'),
+    ]
     base_url = 'http://www.toutiao.com/c/user/article/'
     custom_settings = {
         'ITEM_PIPELINES': {
@@ -32,11 +41,12 @@ class ToutiaoSpider(scrapy.Spider):
     }
 
     def start_requests(self):
-        for user_id in self.user_ids:
-            params = self._get_params(user_id)
-            yield scrapy.FormRequest(self.base_url, method='GET', formdata=params)
+        for user in self.users:
+            params = self._get_params(user.id)
+            yield scrapy.FormRequest(self.base_url, method='GET', formdata=params, meta={'user': user})
 
     def parse(self, response):
+        user = response.meta['user']
         json_data = json.loads(response.body)
         if json_data['has_more'] != 0:
             max_behot_time = json_data['next']['max_behot_time']
@@ -45,9 +55,10 @@ class ToutiaoSpider(scrapy.Spider):
                 item = MultimediaCrawlerItem()
                 item['stack'] = []
                 item['download'] = 0
+                item['extract'] = 0
                 item['host'] = 'toutiao'
                 item['media_type'] = 'video'
-                item['file_dir'] = os.path.join(settings['FILES_STORE'], item['media_type'], self.name)
+                item['file_dir'] = os.path.join(settings['FILES_STORE'], item['media_type'], self.name, user.ks3_name)
                 if 'item_id' in data:
                     item['url'] = 'http://www.toutiao.com/i' + data['item_id'] + '/'
                 else:
@@ -59,7 +70,7 @@ class ToutiaoSpider(scrapy.Spider):
                     'title': data.get('title', ''),
                     'link': item['url'],
                     'intro': data.get('abstract', ''),
-                    'author': data.get('source', ''),
+                    'author': user.name,
                     'play_count': data.get('detail_play_effective_count', 0),
                     'comments_count': data.get('comments_count', 0),
                 }

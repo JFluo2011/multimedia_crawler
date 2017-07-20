@@ -17,8 +17,8 @@ class YouKuSpider(scrapy.Spider):
     download_delay = 20
     # allowed_domains = ["youku.com"]
     users = [
-        WebUser(id='UMTQ5OTEzNjU1Ng==', name='Imba_TV', ks3_name='imba_tv'),
-        # WebUser(id='UMzE4MTU1MDEwMA==', name='即刻video', ks3_name='jike_video'),
+        # WebUser(id='UMTQ5OTEzNjU1Ng==', name='Imba_TV', storage_name='imba_tv'),
+        WebUser(id='UMzE4MTU1MDEwMA==', name='即刻video', storage_name='jike_video'),
     ]
     base_url = 'http://i.youku.com/u/{}/videos'
 
@@ -67,7 +67,7 @@ class YouKuSpider(scrapy.Spider):
             item['stack'] = []
             item['download'] = 0
             item['extract'] = 0
-            item['file_dir'] = os.path.join(settings['FILES_STORE'], item['media_type'], self.name, user.ks3_name)
+            item['file_dir'] = os.path.join(settings['FILES_STORE'], item['media_type'], self.name, user.storage_name)
             item['url'] = 'http:' + sel.xpath('div[@class="v-link"]/a/@href').extract()[0]
             item['file_name'] = get_md5(item['url'])
 

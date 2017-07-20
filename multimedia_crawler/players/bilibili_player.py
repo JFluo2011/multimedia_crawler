@@ -1,21 +1,21 @@
 # -*- coding: utf-8 -*-
 
 import json
-import hashlib
 
 import scrapy
 import xmltodict
 
 from base_player import BasePlayer
 from multimedia_crawler.common.common import get_md5
+from multimedia_crawler.common.bilibili_common import BiLiBiLiCommon
 
 
 class BiLiBiLiPlayer(BasePlayer):
     name = 'bilibili_player'
-    secret_key = '1c15888dc316e05a15fdd0a02ed6584f'
 
     def __init__(self, logger, page_url, *args, **kwargs):
         super(BiLiBiLiPlayer, self).__init__(logger, page_url, *args, **kwargs)
+        self.bilibili_common = BiLiBiLiCommon()
         self.method = 'GET'
         self.url = 'http://api.bilibili.com/view'
         self.params = self.__get_params()
@@ -39,14 +39,7 @@ class BiLiBiLiPlayer(BasePlayer):
             self.logger.error('url: {}, error: {}'.format(self.page_url, str(err)))
             return
 
-        params = {
-            'player': '1',
-            'from': 'miniplay',
-            'cid': str(cid),
-            'quality': '1',
-        }
-        sign = hashlib.md5(bytes('cid={}&from=miniplay&player=1&quality=1{}'.format(cid, self.secret_key))).hexdigest()
-        params['sign'] = sign
+        params = self.bilibili_common.get_params(cid)
         yield scrapy.FormRequest(url=url, method='GET', meta={'item': item},
                                  formdata=params, callback=self.parse_video_urls)
 

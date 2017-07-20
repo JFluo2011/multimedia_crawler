@@ -5,7 +5,7 @@ from pymongo import MongoClient
 from scrapy.conf import settings
 
 
-WebUser = namedtuple('WebUser', ['id', 'name', 'ks3_name'])
+WebUser = namedtuple('WebUser', ['id', 'name', 'storage_name'])
 
 
 def get_md5(txt):

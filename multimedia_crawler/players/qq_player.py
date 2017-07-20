@@ -6,7 +6,7 @@ import scrapy
 
 from base_player import BasePlayer
 from multimedia_crawler.common.common import get_md5
-from multimedia_crawler.common.v_qq_com import VQQCom
+from multimedia_crawler.common.v_qq_common import VQQCom
 
 
 class QQPlayer(BasePlayer):

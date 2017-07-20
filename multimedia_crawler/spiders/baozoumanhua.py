@@ -18,7 +18,6 @@ class BaoZouManHua(scrapy.Spider):
     name = 'baozoumanhua'
     download_delay = 5
     start_urls = ['http://baozoumanhua.com/api/v2/series/video_channels?page=' + str(i) for i in range(1, 7)]
-    count = 0
 
     custom_settings = {
         'ITEM_PIPELINES': {

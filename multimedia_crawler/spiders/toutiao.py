@@ -19,15 +19,15 @@ class ToutiaoSpider(scrapy.Spider):
     name = "toutiao"
     download_delay = 5
     users = [
-        WebUser(id='6975800262', name='八斗', ks3_name='badou'),
-        WebUser(id='50590890693', name='Knews环球交叉点', ks3_name='huanqiujiaochadian'),
-        WebUser(id='5857206714', name='Maxonor创意公元', ks3_name='chuangyigongyuan'),
-        WebUser(id='6264649967', name='第一军情', ks3_name='diyijunqing'),
-        WebUser(id='6373263682', name='关东微喜剧', ks3_name='guandongweixijun'),
-        WebUser(id='6905052877', name='军榜', ks3_name='junbang'),
-        WebUser(id='6887101617', name='每日点兵', ks3_name='meiridianbing'),
-        WebUser(id='6886776520', name='未来网', ks3_name='weilaiwang'),
-        WebUser(id='6976474883', name='荔枝新闻', ks3_name='lizhixinwen'),
+        WebUser(id='6975800262', name='八斗', storage_name='badou'),
+        WebUser(id='50590890693', name='Knews环球交叉点', storage_name='huanqiujiaochadian'),
+        WebUser(id='5857206714', name='Maxonor创意公元', storage_name='chuangyigongyuan'),
+        WebUser(id='6264649967', name='第一军情', storage_name='diyijunqing'),
+        WebUser(id='6373263682', name='关东微喜剧', storage_name='guandongweixijun'),
+        WebUser(id='6905052877', name='军榜', storage_name='junbang'),
+        WebUser(id='6887101617', name='每日点兵', storage_name='meiridianbing'),
+        WebUser(id='6886776520', name='未来网', storage_name='weilaiwang'),
+        WebUser(id='6976474883', name='荔枝新闻', storage_name='lizhixinwen'),
     ]
     base_url = 'http://www.toutiao.com/c/user/article/'
     custom_settings = {
@@ -58,7 +58,7 @@ class ToutiaoSpider(scrapy.Spider):
                 item['extract'] = 0
                 item['host'] = 'toutiao'
                 item['media_type'] = 'video'
-                item['file_dir'] = os.path.join(settings['FILES_STORE'], item['media_type'], self.name, user.ks3_name)
+                item['file_dir'] = os.path.join(settings['FILES_STORE'], item['media_type'], self.name, user.storage_name)
                 if 'item_id' in data:
                     item['url'] = 'http://www.toutiao.com/i' + data['item_id'] + '/'
                 else:

@@ -17,8 +17,8 @@ class IQiYiSpider(scrapy.Spider):
     name = "iqiyi"
     download_delay = 5
     users = [
-        WebUser(id='1190686219', name='造物集', ks3_name='zaowuji'),
-        WebUser(id='1233288265', name='微在涨姿势', ks3_name='weizaizhangzishi'),
+        WebUser(id='1190686219', name='造物集', storage_name='zaowuji'),
+        WebUser(id='1233288265', name='微在涨姿势', storage_name='weizaizhangzishi'),
     ]
     # allowed_domains = ["youku.com"]
     base_url = 'http://www.iqiyi.com/u/{}/v'
@@ -56,7 +56,7 @@ class IQiYiSpider(scrapy.Spider):
             item['extract'] = 0
             item['host'] = 'iqiyi'
             item['media_type'] = 'video'
-            item['file_dir'] = os.path.join(settings['FILES_STORE'], item['media_type'], self.name, user.ks3_name)
+            item['file_dir'] = os.path.join(settings['FILES_STORE'], item['media_type'], self.name, user.storage_name)
             item['url'] = sel.xpath('./div[1]/a/@href').extract()[0]
             item['file_name'] = get_md5(item['url'])
             date = sel.xpath('./div[2]/p[2]/span[2]/text()').extract_first(default='').strip()

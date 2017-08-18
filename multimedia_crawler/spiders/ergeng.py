@@ -18,7 +18,7 @@ from multimedia_crawler.players.youku_player import YouKuPlayer
 # class ErGengSpider(CrawlSpider):
 class ErGengSpider(scrapy.Spider):
     name = "ergeng"
-    download_delay = 10
+    download_delay = 5
     # allowed_domains = ["www.ergengtv.com"]
     # start_urls = ['http://www.ergengtv.com/video/list/', 'http://www.ergengtv.com/project/issue/']
     start_urls = ['http://www.ergengtv.com/video/1573.html']

@@ -14,6 +14,7 @@ class MultimediaCrawlerItem(scrapy.Item):
     media_type = scrapy.Field()
     url = scrapy.Field()
     media_urls = scrapy.Field()
+    birthday = scrapy.Field()
     host = scrapy.Field()
     file_dir = scrapy.Field()
     download = scrapy.Field()

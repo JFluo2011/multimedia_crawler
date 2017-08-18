@@ -50,7 +50,7 @@ class BiLiBiLiSpider(scrapy.Spider):
         url = 'https://space.bilibili.com/ajax/member/getSubmitVideos'
         json_data = json.loads(response.body)
         total = json_data['data']['video']
-        pages = total // page_size if not (total % page_size) else (total // total + 1)
+        pages = total // page_size if not (total % page_size) else (total // page_size + 1)
         for page in range(1, pages + 1):
             params = {
                 'mid': user.id,
@@ -66,7 +66,7 @@ class BiLiBiLiSpider(scrapy.Spider):
     def parse_items(self, response):
         user = response.meta['user']
         json_data = json.loads(response.body)
-        base_url = 'https://www.bilibili.com/video/av{}'
+        base_url = 'https://www.bilibili.com/video/av{}/'
         # base_url = 'http://api.bilibili.com/view'
         for data in json_data['data']['vlist']:
             item = MultimediaCrawlerItem()
@@ -111,7 +111,11 @@ class BiLiBiLiSpider(scrapy.Spider):
             self.logger.error('url: {}, error: {}'.format(item['url'], str(err)))
             return
         try:
-            item['media_urls'] = [json_data['video']['durl']['url']]
+            if isinstance(json_data['video']['durl'], list):
+                item['media_urls'] = [data['url'] for data in json_data['video']['durl']]
+            else:
+                item['media_urls'] = [json_data['video']['durl']['url']]
+            # item['media_urls'] = [json_data['video']['durl']['url']]
         except Exception as err:
             self.logger.error('url: {}, error: {}'.format(item['url'], str(err)))
             return

@@ -14,7 +14,7 @@ from multimedia_crawler.common.common import get_md5, WebUser
 
 class YouKuSpider(scrapy.Spider):
     name = "youku"
-    download_delay = 20
+    download_delay = 5
     # allowed_domains = ["youku.com"]
     users = [
         # WebUser(id='UMTQ5OTEzNjU1Ng==', name='Imba_TV', storage_name='imba_tv'),

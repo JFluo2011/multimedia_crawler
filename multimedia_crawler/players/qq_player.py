@@ -29,7 +29,7 @@ class QQPlayer(BasePlayer):
         if not self.__get_json(response):
             return
 
-        if not self.__get_media_urls():
+        if not self.__get_media_urls(item):
             return
         item['media_urls'] = self.media_urls
         item['file_name'] = self.file_name
@@ -44,14 +44,14 @@ class QQPlayer(BasePlayer):
     def parse_play_count(self, response):
         item = response.meta['item']
         vid = response.meta['vid']
-        xpath = '//span[@data-id="{}"]/text()'.format(vid)
-        item['info']['play_count'] = response.xpath(xpath).extract_first(default='')
+        path = '//span[@data-id="{}"]/text()'.format(vid)
+        item['info']['play_count'] = response.xpath(path).extract_first(default='')
         if (item['info']['play_count'] == '') and (not re.findall(r'专辑播放', response.body)):
             item['info']['play_count'] = (response.xpath('//em[@id="mod_cover_playnum"]/text()')
                                           .extract_first(default=''))
         return item
 
-    def __get_media_urls(self):
+    def __get_media_urls(self, item):
         url, result = self.v_qq_com.get_video_info(self.params['guid'], self.json_data)
         if url is None:
             self.logger.error('url: {}, error: {}'.format(self.page_url, result))
@@ -59,7 +59,7 @@ class QQPlayer(BasePlayer):
         elif not url:
             self.logger.error('url: {}, error: did not get any URL in the json data'.format(self.page_url))
             return False
-        self.file_name = get_md5(self.page_url) + result
+        self.file_name = get_md5(item['url']) + result
         self.media_urls = [url]
         return True
 

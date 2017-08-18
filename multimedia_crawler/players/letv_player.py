@@ -24,16 +24,16 @@ class LetvPlayer(BasePlayer):
         item = response.meta['item']
         if not self.get_json(response):
             return
-        if not self.get_media_urls():
+        if not self.get_media_urls(item):
             return
         item['media_urls'] = self.media_urls
         item['file_name'] = self.file_name
         return item
 
-    def get_media_urls(self):
+    def get_media_urls(self, item):
         try:
             self.media_urls = [base64.b64decode(self.json_data['data']['videoinfo']['medialist'][0]['urllist'][0]['url'])]
-            self.file_name = (get_md5(self.page_url) + '.' +
+            self.file_name = (get_md5(item['url']) + '.' +
                               self.json_data['data']['videoinfo']['title'].split('.')[-1])
         except Exception, err:
             self.logger.error('url: {}, error: {}'.format(self.page_url, str(err)))

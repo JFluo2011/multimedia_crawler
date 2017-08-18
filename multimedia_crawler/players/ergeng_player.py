@@ -21,19 +21,19 @@ class ErgengPlayer(BasePlayer):
         item = response.meta['item']
         if not self.__get_json(response):
             return
-        if not self.__get_media_urls():
+        if not self.__get_media_urls(item):
             return
         item['media_urls'] = self.media_urls
         item['file_name'] = self.file_name
         return item
 
-    def __get_media_urls(self):
+    def __get_media_urls(self, item):
         try:
             segs = self.json_data['msg']['segs']
             if not self.__get_urls(segs):
                 self.logger.error('url: {}, error: no such video types'.format(self.page_url))
                 return False
-            self.file_name = get_md5(self.page_url) + '.' + self.media_urls[0].split('.')[-1]
+            self.file_name = get_md5(item['url']) + '.' + self.media_urls[0].split('.')[-1]
         except Exception, err:
             self.logger.error('url: {}, error: {}'.format(self.page_url, str(err)))
             return False

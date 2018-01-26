@@ -23,11 +23,16 @@ class SinaWeiBoVideoSpider(scrapy.Spider):
     download_delay = 5
     # allowed_domains = ['chuansong.me', 'video.qq.com']
     users = [
+        WebUser(id='1006065498125999', name='即刻', storage_name='jike'),
+        WebUser(id='1005055135808743', name='一条', storage_name='yitiao'),
+        WebUser(id='1005052849964471', name='飞碟说', storage_name='feidieshuo'),
+        WebUser(id='1005052144684673', name='暴走漫画', storage_name='baozoumanhua'),
+        # WebUser(id='1005055783798079', name='刻画', storage_name='kehua'),
         # WebUser(id='1005053948713134', name='日食记', storage_name='rishiji'),
         # WebUser(id='1005055709892136', name='刘哔电影', storage_name='liuhuadianying'),
         # WebUser(id='1005053171948942', name='一人食', storage_name='yirenshi'),
         # WebUser(id='1005052163553891', name='VICE中国', storage_name='vicechina'),
-        WebUser(id='1002061618051664', name='CCTV5', storage_name='cctv5'),
+        # WebUser(id='1006063077513805', name='小镜头大世界', storage_name='xiaoying'),
     ]
     base_url = 'http://www.weibo.com/p/{}/photos?type=video#place'
 

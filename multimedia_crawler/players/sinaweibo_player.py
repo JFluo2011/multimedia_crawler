@@ -25,11 +25,16 @@ class SinaWeiBoPlayer(BasePlayer):
         item['info']['date'] = response.xpath('//div[@class="broad_time W_f12"]/text()').extract_first(default='')
         item['info']['intro'] = response.xpath('//div[@class="info_txt W_f14"]/text()').extract_first(default='')
         item['info']['play_count'] = re.findall(r'play_count=(.*?)[&\"]', response.body)[0]
-        item['media_urls'] = re.findall(r'video_src=(.*?)[&\"]', response.body)
-        if not item['media_urls']:
+        urls = re.findall(r'video_src=(.*?)[&\"]', response.body)
+        if not urls:
             self.logger.error('url: {}, error: did not get any URL'.format(self.page_url))
             return
-        item['media_urls'] = [urllib.unquote(url) for url in item['media_urls']]
+        item['media_urls'] = []
+        for url in urls:
+            url = urllib.unquote(url)
+            if ('http' not in url) or ('https' not in url):
+                url = 'http:' + url
+            item['media_urls'].append(url)
         item['file_name'] = get_md5(item['url']) + '.mp4'
 
         return item

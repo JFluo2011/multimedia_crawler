@@ -16,7 +16,7 @@ class IQiYiSpider(scrapy.Spider):
     download_delay = 5
     users = [
         WebUser(id='1190686219', name='造物集', storage_name='zaowuji'),
-        WebUser(id='1233288265', name='微在涨姿势', storage_name='weizaizhangzishi'),
+        # WebUser(id='1233288265', name='微在涨姿势', storage_name='weizaizhangzishi'),
     ]
     # allowed_domains = ["youku.com"]
     base_url = 'http://www.iqiyi.com/u/{}/v'

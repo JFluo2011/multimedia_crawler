@@ -20,7 +20,8 @@ class XinPianChangSpider(CrawlSpider):
 # class XinPianChangSpider(scrapy.Spider):
     name = "xinpianchang"
     download_delay = 5
-    start_urls = ['http://www.xinpianchang.com/']
+    # start_urls = ['http://www.xinpianchang.com/']
+    start_urls = ['http://www.xinpianchang.com/channel']
     # start_urls = ['http://www.xinpianchang.com/channel/index/id-122/sort-like/page-38']
     # start_urls = ['http://www.xinpianchang.com/a18909']
 
@@ -31,7 +32,8 @@ class XinPianChangSpider(CrawlSpider):
             # follow=True,
         ),
         Rule(
-            LinkExtractor(allow=('http://www.xinpianchang.com/.*?', )),
+            # LinkExtractor(allow=('http://www.xinpianchang.com/.*?', )),
+            LinkExtractor(allow=('http://www.xinpianchang.com/channel/.*?', )),
         ),
     )
 
@@ -45,7 +47,7 @@ class XinPianChangSpider(CrawlSpider):
         },
         'SPIDER_MIDDLEWARES': {
             # 'scrapy.spidermiddlewares.offsite.OffsiteMiddleware': None,
-            'multimedia_crawler.middlewares.MultimediaCrawlerMiddleware': 500,
+            # 'multimedia_crawler.middlewares.MultimediaCrawlerMiddleware': 500,
         }
     }
 

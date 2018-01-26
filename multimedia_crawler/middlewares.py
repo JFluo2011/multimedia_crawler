@@ -9,14 +9,33 @@ import re
 import copy
 import random
 import logging
+import urllib
+import json
 
 import scrapy
+import requests
 from scrapy import signals
 from scrapy.downloadermiddlewares.useragent import UserAgentMiddleware
 from scrapy.exceptions import IgnoreRequest
 from scrapy.conf import settings
+from fake_useragent import UserAgent
 
 from common.common import setup_mongodb
+
+
+class RotateUserAgentMiddleware(UserAgentMiddleware):
+    ua_obj = UserAgent()
+    regex = re.compile(r"android|iphone|ipad|mobile")
+
+    def __init__(self, user_agent=''):
+        super(RotateUserAgentMiddleware, self).__init__()
+
+    def process_request(self, request, spider):
+        # ua = random.choice(settings['USER_AGENTS'])
+        user_agent = self.ua_obj.random
+        if (not user_agent) or (self.regex.search(user_agent.lower())):
+            user_agent = random.choice(settings['USER_AGENTS'])
+        request.headers.setdefault('User-Agent', user_agent)
 
 
 class MultimediaCrawlerDupFilterMiddleware(object):
@@ -33,7 +52,26 @@ class MultimediaCrawlerDupFilterMiddleware(object):
             logging.warning('the page is crawled, url is {0}'.format(request.url))
             raise IgnoreRequest()
 
-        return None
+
+class WeiTaoDupFilterMiddleware(object):
+    def process_request(self, request, spider):
+        if 'storage_name' in request.url:
+            json_data = json.loads(urllib.unquote(request.url))
+            user = json_data['user']
+            page = json_data['page']
+            # cookies, token = spider.get_cookies()
+            url, params = spider.get_args(user, int(page), spider.token)
+            meta = {
+                'user': user,
+                'page': page,
+                'task': urllib.unquote(request.url),
+                'cookies': spider.cookies,
+            }
+            if 'Referer' in request.headers:
+                request.headers.pop('Referer')
+            # referer = 'https://daren.taobao.com/account_page/daren_home.htm?user_id={}'.format(user['user_id'])
+            return scrapy.FormRequest(url, method='GET', formdata=params,
+                                      meta=meta, cookies=spider.cookies, callback=spider.parse)
 
 
 class XinPianChangDupFilterMiddleware(MultimediaCrawlerDupFilterMiddleware):
@@ -153,21 +191,6 @@ class MultimediaCrawlerMiddleware(object):
 #
 #     def spider_opened(self, spider):
 #         spider.logger.info('Spider opened: %s' % spider.name)
-
-
-class RotateUserAgentMiddleware(UserAgentMiddleware):
-    def __init__(self, user_agent=''):
-        super(RotateUserAgentMiddleware, self).__init__()
-        self.user_agent = user_agent
-
-    def process_request(self, request, spider):
-        ua = random.choice(settings['USER_AGENTS'])
-        if ua:
-            # print ua
-            request.headers.setdefault('User-Agent', ua)
-
-    # the default user_agent_list composes chrome,I E,firefox,Mozilla,opera,netscape
-    # for more user agent strings,you can find it in http://www.useragentstring.com/pages/useragentstring.php
 
 
 class QingTingFMAppUserAgentMiddleware(UserAgentMiddleware):

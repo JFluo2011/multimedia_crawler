@@ -14,5 +14,6 @@ class BiLiBiLiCommon(object):
             'quality': '3',
         }
         sign = hashlib.md5(bytes('cid={}&from=miniplay&player=1&quality=3{}'.format(cid, self.secret_key))).hexdigest()
+        # sign = hashlib.md5(bytes('cid={}&from=miniplay&player=1&quality=1{}'.format(cid, self.secret_key))).hexdigest()
         params.update({'sign': sign})
         return params

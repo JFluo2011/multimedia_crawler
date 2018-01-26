@@ -3,6 +3,7 @@
 import re
 import os
 import time
+import copy
 import json
 import xmltodict
 
@@ -20,7 +21,8 @@ class BiLiBiLiSpider(scrapy.Spider):
     download_delay = 5
     base_url = 'https://space.bilibili.com/{}#!/video'
     users = [
-        WebUser(id='31964921', name='繁花社长', storage_name='fanhuashezhang'),
+        # WebUser(id='31964921', name='繁花社长', storage_name='fanhuashezhang'),
+        WebUser(id='47683654', name='wsceng', storage_name='wsceng'),
         # WebUser(id='883968', name='暴走漫画', storage_name='baozoumanhua'),
         # WebUser(id='4568410', name='ImbaTV官方', storage_name='imba_tv'),
         # WebUser(id='19591909', name='二更视频', storage_name='ergeng'),
@@ -90,18 +92,33 @@ class BiLiBiLiSpider(scrapy.Spider):
             }
             meta = {
                 # 'aid': data['aid'],
-                'item': item,
+                'item_base': item,
             }
-            yield scrapy.Request(url=item['url'], meta=meta, callback=self.parse_video)
+            yield scrapy.Request(url=item['url'], meta=meta, callback=self.parse_videos)
 
-    def parse_video(self, response):
-        item = response.meta['item']
+    def parse_videos(self, response):
+        item_base = response.meta['item_base']
+        sels = response.xpath(r'//div[@id="plist"]//option')
         url = 'https://interface.bilibili.com/playurl'
-        cid = re.search(r'cid\s*=\s*(\d+)[\'\"&]', response.body).group(1)
         bilibili_common = BiLiBiLiCommon()
-        params = bilibili_common.get_params(cid)
-        yield scrapy.FormRequest(url=url, method='GET', meta={'item': item},
-                                 formdata=params, callback=self.parse_video_urls)
+        item_base['file_dir'] += '\\' + item_base['info']['title']
+        if sels:
+            for sel in sels:
+                item = copy.deepcopy(item_base)
+                cid = sel.xpath('@cid').extract()[0]
+                item['url'] = item['info']['link'] = 'https://www.bilibili.com{}'.format(
+                    sel.xpath('@value').extract()[0])
+                item['file_name'] = sel.xpath(r'text()').extract()[0]
+                params = bilibili_common.get_params(cid)
+                yield scrapy.FormRequest(url=url, method='GET', meta={'item': item},
+                                         formdata=params, callback=self.parse_video_urls)
+        else:
+            item = copy.deepcopy(item_base)
+            cid = re.search(r'cid\s*=\s*(\d+)[\'\"&]', response.body).group(1)
+            item['file_name'] = response.xpath(r'//meta[@property="media:title"]/@content').extract()[0]
+            params = bilibili_common.get_params(cid)
+            yield scrapy.FormRequest(url=url, method='GET', meta={'item': item},
+                                     formdata=params, callback=self.parse_video_urls)
 
     def parse_video_urls(self, response):
         item = response.meta['item']
@@ -126,5 +143,5 @@ class BiLiBiLiSpider(scrapy.Spider):
 
         item['file_name'] += '.' + item['media_urls'][0].split('?')[0].split('.')[-1]
 
-        return item
+        yield item
 

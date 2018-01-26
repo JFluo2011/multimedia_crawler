@@ -36,12 +36,12 @@ class MultimediaCrawlerPipeline(object):
                 'stack': item['stack'],
                 'media_urls': item['media_urls'],
             }
-            self.col.update({'url': item['url']}, data, upsert=True)
+            # self.col.update({'url': item['url']}, data, upsert=True)
             # self.col.update({'url': item['url']}, {'$set': {'info': item['info']}})
-            # self.col.insert(data)
-        except Exception, err:
+            self.col.insert(data)
+        except Exception as err:
             logging.error(str(err))
-            raise DropItem(str(err))
+            DropItem()
         return item
 
 
